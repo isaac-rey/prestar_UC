@@ -55,7 +55,7 @@ $historial = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 <body>
   <header>
     <div>Inventario — Estudiante</div>
-    <div><?=htmlspecialchars($e['nombre'].' '.$e['apellido'])?> · <a href="/inventario_uni/public/estudiantes_logout.php">Salir</a></div>
+    <div><?=htmlspecialchars($e['nombre'].' '.$e['apellido'])?> · <a href="/prestar_uc/public/estudiantes_logout.php">Salir</a></div>
   </header>
 
   <div class="container">
@@ -65,10 +65,10 @@ $historial = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         <p class="muted">Podés escanear el QR de un equipo para pedir préstamo o devolverlo, o buscarlo por número de serie.</p>
         
         <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:12px">
-          <a class="btn" href="/inventario_uni/public/estudiante_scan.php">📷 Escanear QR de un equipo</a>
+          <a class="btn" href="/prestar_uc/public/estudiante_scan.php">📷 Escanear QR de un equipo</a>
           
           <!-- Formulario de búsqueda por número de serie -->
-          <form class="search-form" method="get" action="/inventario_uni/public/estudiante_equipo.php">
+          <form class="search-form" method="get" action="/prestar_uc/public/estudiante_equipo.php">
             <input class="search-input" type="text" name="serial" placeholder="Ingresar N° de serie" required>
             <button class="btn" type="submit">🔍 Buscar</button>
           </form>

@@ -121,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
   <header>
-    <div><a href="/inventario_uni/public/estudiante_panel.php">← Panel estudiante</a></div>
+    <div><a href="/prestar_uc/public/estudiante_panel.php">← Panel estudiante</a></div>
     <div><?=htmlspecialchars($e['nombre'].' '.$e['apellido'])?> · <a href="/inventario_uni/public/estudiantes_logout.php">Salir</a></div>
   </header>
 
