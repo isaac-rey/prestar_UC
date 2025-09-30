@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'nombre' => $row['nombre'],
         'apellido' => $row['apellido'],
       ];
-      header('Location: /prestar_uc/public/estudiantes/estudiante_panel.php');
+      header('Location: /inventario_uni/public/estudiante_panel.php');
       exit;
     } else {
       $error = 'CI o contraseña incorrectos.';
@@ -62,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <button type="submit">Entrar</button>
     </form>
     <div class="muted" style="margin-top:12px;">
+      ¿No tenés cuenta? <a href="/inventario_uni/public/estudiantes_registro.php">Registrate</a>
        <p><a href="../config/password_estudiantes.php">¿Olvidaste tu contraseña?</a></p>
     </div>
   </div>
