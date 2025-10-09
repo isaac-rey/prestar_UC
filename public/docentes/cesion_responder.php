@@ -1,7 +1,7 @@
 <?php
-require __DIR__ . '/estudiante_init.php';
-require_est_login();
-$e = est();
+require __DIR__ . '/docente_init.php';
+require_doc_login();
+$e = doc();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cesion_id = intval($_POST['cesion_id'] ?? 0);
@@ -11,8 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         die("Solicitud inválida.");
     }
 
-    // Verificar que esta cesión sea realmente para el estudiante actual
-    $stmt = $mysqli->prepare("SELECT * FROM cesiones WHERE id=? AND a_estudiante_id=? AND estado='pendiente' LIMIT 1");
+    // Verificar que esta cesión sea realmente para el docente actual
+    $stmt = $mysqli->prepare("SELECT * FROM cesiones WHERE id=? AND a_docente_id=? AND estado='pendiente' LIMIT 1");
     $stmt->bind_param("ii", $cesion_id, $e['id']);
     $stmt->execute();
     $cesion = $stmt->get_result()->fetch_assoc();
@@ -29,13 +29,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Si se aceptó, también se debe actualizar el préstamo
     if ($accion === 'aceptar') {
-        $stmt = $mysqli->prepare("UPDATE prestamos SET estudiante_id=? WHERE id=?");
+        $stmt = $mysqli->prepare("UPDATE prestamos SET docente_id=? WHERE id=?");
         $stmt->bind_param("ii", $e['id'], $cesion['prestamo_id']);
         $stmt->execute();
     }
 
     // Redirigir al panel
-    header("Location: estudiante_panel.php");
+    header("Location: docente_panel.php");
     exit;
 } else {
     die("Método inválido.");

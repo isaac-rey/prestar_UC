@@ -1,5 +1,5 @@
 <?php
-// public/estudiantes_login.php
+// public/docentes_login.php
 session_start();
 require __DIR__ . '/../config/db.php';
 
@@ -12,19 +12,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if ($ci === '' || $pass === '') {
     $error = 'CI y contraseña son obligatorios.';
   } else {
-    $stmt = $mysqli->prepare("SELECT id, ci, nombre, apellido, password_hash FROM estudiantes WHERE ci=? LIMIT 1");
+    $stmt = $mysqli->prepare("SELECT id, ci, nombre, apellido, password_hash FROM docentes WHERE ci=? LIMIT 1");
     $stmt->bind_param('s', $ci);
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
 
     if ($row && password_verify($pass, $row['password_hash'])) {
-      $_SESSION['est'] = [
+      $_SESSION['doc'] = [
         'id' => $row['id'],
         'ci' => $row['ci'],
         'nombre' => $row['nombre'],
         'apellido' => $row['apellido'],
       ];
-      header('Location: /inventario_uni/public/estudiante_panel.php');
+      header('Location: /prestar_uc/public/docentes/docente_panel.php');
       exit;
     } else {
       $error = 'CI o contraseña incorrectos.';
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>Login estudiante — Inventario</title>
+  <title>Login docente — Inventario</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body{font-family:system-ui,Segoe UI,Arial,sans-serif;background:#0f172a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
   <div class="card">
-    <h1>Ingreso de estudiante</h1>
+    <h1>Ingreso de docente</h1>
     <?php if ($error): ?><div class="error"><?=htmlspecialchars($error)?></div><?php endif; ?>
     <form method="post" autocomplete="off">
       <label>CI</label>
@@ -62,7 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <button type="submit">Entrar</button>
     </form>
     <div class="muted" style="margin-top:12px;">
-      ¿No tenés cuenta? <a href="/inventario_uni/public/estudiantes_registro.php">Registrate</a>
        <p><a href="../config/password_estudiantes.php">¿Olvidaste tu contraseña?</a></p>
     </div>
   </div>

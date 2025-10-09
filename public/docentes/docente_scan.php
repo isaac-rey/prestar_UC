@@ -1,13 +1,13 @@
 <?php
-require __DIR__ . '/estudiante_init.php';
-require_est_login();
-$e = est();
+require __DIR__ . '/docente_init.php';
+require_doc_login();
+$e = doc();
 ?>
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>Escanear QR — Estudiante</title>
+  <title>Escanear QR — Docente</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body{font-family:system-ui,Segoe UI,Arial,sans-serif;background:#0f172a;color:#e2e8f0;margin:0}
@@ -21,10 +21,10 @@ $e = est();
 </head>
 <body>
   <header>
-    <div><a href="/prestar_uc/public/estudiantes/estudiante_panel.php">← Panel</a></div>
-    <div>Inventario — Estudiante</div>
+    <div><a href="/prestar_uc/public/docentes/docente_panel.php">← Panel</a></div>
+    <div>Inventario — Docente</div>
     <div><?=htmlspecialchars($e['nombre'].' '.$e['apellido'])?> · 
-      <a href="/prestar_uc/auth/logout_estudiante.php">Salir</a>
+      <a href="/prestar_uc/auth/logout_docente.php">Salir</a>
     </div>
   </header>
 
@@ -48,7 +48,7 @@ $e = est();
       const gotoEquipo = async (serial) => {
         try { await scanner.clear(); } catch (_) {}
         setTimeout(() => {
-          window.location.assign(`/inventario_uni/public/estudiantes/estudiante_equipo.php?serial=${encodeURIComponent(serial)}`);
+          window.location.assign(`/inventario_uni/public/docentes/docente_equipo.php?serial=${encodeURIComponent(serial)}`);
         }, 60);
       };
 

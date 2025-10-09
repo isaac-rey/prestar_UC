@@ -1,7 +1,7 @@
 <?php
-require __DIR__ . '/estudiante_init.php';
-require_est_login();
-$e = est();
+require __DIR__ . '/docente_init.php';
+require_doc_login();
+$e = doc();
 
 $prestamo_id = intval($_GET['prestamo_id'] ?? 0);
 $serial = trim($_GET['serial'] ?? '');
@@ -18,7 +18,7 @@ if (!$prestamo) die("Préstamo no encontrado.");
 if ($prestamo['estado'] !== 'activo') die("Este préstamo ya no está activo.");
 
 // Solo quien tiene el préstamo puede ceder
-if (intval($prestamo['estudiante_id']) !== intval($e['id'])) die("No puede ceder este préstamo.");
+if (intval($prestamo['docente_id']) !== intval($e['id'])) die("No puede ceder este préstamo.");
 
 $error = '';
 $ok = '';
@@ -29,8 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$docente_receptor) {
         $error = "Debe ingresar el CI o nombre del docente receptor.";
     } else {
-        // Buscar estudiante receptor por CI o nombre completo
-        $stmt = $mysqli->prepare("SELECT id FROM estudiantes WHERE ci=? OR CONCAT(nombre,' ',apellido)=? LIMIT 1");
+        // Buscar docente receptor por CI o nombre completo
+        $stmt = $mysqli->prepare("SELECT id FROM docentes WHERE ci=? OR CONCAT(nombre,' ',apellido)=? LIMIT 1");
         $stmt->bind_param("ss", $docente_receptor, $docente_receptor);
         $stmt->execute();
         $receptor = $stmt->get_result()->fetch_assoc();
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$receptor) {
             $error = "No se encontró el docente receptor.";
         } else {
-            $a_estudiante_id = intval($receptor['id']);
+            $a_docente_id = intval($receptor['id']);
             $cedente_id = intval($e['id']);
 
             // Verificar si ya existe cesión pendiente
@@ -50,9 +50,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($existe) {
                 $error = "Ya existe una solicitud de cesión pendiente para este préstamo.";
             } else {
-                // Insertar nueva solicitud usando cedente_id y a_estudiante_id
-                $stmt = $mysqli->prepare("INSERT INTO cesiones (prestamo_id, cedente_id, a_estudiante_id, estado) VALUES (?,?,?, 'pendiente')");
-                $stmt->bind_param("iii", $prestamo_id, $cedente_id, $a_estudiante_id);
+                // Insertar nueva solicitud usando cedente_id y a_docente_id
+                $stmt = $mysqli->prepare("INSERT INTO cesiones (prestamo_id, cedente_id, a_docente_id, estado) VALUES (?,?,?, 'pendiente')");
+                $stmt->bind_param("iii", $prestamo_id, $cedente_id, $a_docente_id);
 
                 if ($stmt->execute()) {
                     $ok = "Solicitud de cesión enviada correctamente. El docente receptor debe aceptarla.";
@@ -87,8 +87,8 @@ button { padding:10px 14px; border:0; border-radius:8px; background:#2563eb; col
 <body>
 
 <header>
-    <div><a href="estudiante_equipo.php?serial=<?= urlencode($serial) ?>">← Volver al equipo</a></div>
-    <div><?= htmlspecialchars($e['nombre'].' '.$e['apellido']) ?> · <a href="/inventario_uni/public/estudiantes/estudiantes_logout.php">Salir</a></div>
+    <div><a href="docente_equipo.php?serial=<?= urlencode($serial) ?>">← Volver al equipo</a></div>
+    <div><?= htmlspecialchars($e['nombre'].' '.$e['apellido']) ?> · <a href="/inventario_uni/auth/logout_docente.php">Salir</a></div>
 </header>
 
 <div class="container">

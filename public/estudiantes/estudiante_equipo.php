@@ -4,38 +4,30 @@ require_est_login();
 $e = est();
 
 $serial = trim($_GET['serial'] ?? '');
-if ($serial === '') {
-    die("Serial no especificado.");
-}
+if ($serial === '') die("Serial no especificado.");
 
-// Traer equipo por serial + sus componentes
+// Traer equipo por serial + área y sala
 $stmt = $mysqli->prepare("
     SELECT e.*, a.nombre AS area, s.nombre AS sala
     FROM equipos e
     JOIN areas a ON a.id = e.area_id
     LEFT JOIN salas s ON s.id = e.sala_id
-    WHERE e.serial_interno = ?
-    LIMIT 1
+    WHERE e.serial_interno=? LIMIT 1
 ");
 $stmt->bind_param("s", $serial);
 $stmt->execute();
 $equipo = $stmt->get_result()->fetch_assoc();
 if (!$equipo) die("Equipo no encontrado.");
-
 $equipo_id = intval($equipo['id']);
 
-// Componentes del equipo
-$stmt = $mysqli->prepare("SELECT * FROM componentes WHERE equipo_id=? ORDER BY creado_en DESC");
-$stmt->bind_param("i", $equipo_id);
-$stmt->execute();
-$componentes = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-// Préstamo activo
+// Buscar préstamo activo o pendiente (estudiante o docente)
 $stmt = $mysqli->prepare("
-    SELECT p.*, est.ci, est.nombre, est.apellido, est.id AS estudiante_id
+    SELECT p.*,
+           d.id AS d_id, est.id AS e_id
     FROM prestamos p
-    JOIN estudiantes est ON est.id = p.estudiante_id
-    WHERE p.equipo_id=? AND p.estado='activo'
+    LEFT JOIN docentes d ON d.id = p.docente_id
+    LEFT JOIN estudiantes est ON est.id = p.estudiante_id
+    WHERE p.equipo_id=? AND p.estado IN ('activo','pendiente')
     ORDER BY p.fecha_entrega DESC
     LIMIT 1
 ");
@@ -43,33 +35,37 @@ $stmt->bind_param("i", $equipo_id);
 $stmt->execute();
 $prestamo_act = $stmt->get_result()->fetch_assoc();
 
-$yo_lo_tengo = $prestamo_act && intval($prestamo_act['estudiante_id']) === intval($e['id']);
+// Verificar si el estudiante actual tiene el equipo (activo)
+$yo_lo_tengo = $prestamo_act && intval($prestamo_act['e_id']) === intval($e['id']);
+
+// Componentes del equipo
+$stmt = $mysqli->prepare("SELECT * FROM componentes WHERE equipo_id=? ORDER BY creado_en DESC");
+$stmt->bind_param("i", $equipo_id);
+$stmt->execute();
+$componentes = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 $error = '';
 $ok = '';
 
-// Acciones del estudiante
+// Acciones de solicitud/devolución
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $accion = $_POST['accion'] ?? '';
 
-    if ($accion === 'prestar') {
+    if ($accion === 'solicitar') {
         $obs = trim($_POST['observacion'] ?? '');
         if ($prestamo_act) {
-            $error = "Este equipo ya está prestado.";
+            $error = "Ya existe una solicitud o préstamo activo para este equipo.";
         } else {
-            $stmt = $mysqli->prepare("INSERT INTO prestamos (equipo_id, estudiante_id, observacion) VALUES (?,?,?)");
+            $stmt = $mysqli->prepare("
+                INSERT INTO prestamos (equipo_id, estudiante_id, observacion, estado)
+                VALUES (?,?,?, 'pendiente')
+            ");
             $stmt->bind_param("iis", $equipo_id, $e['id'], $obs);
             $stmt->execute();
-
-            $stmt = $mysqli->prepare("UPDATE equipos SET prestado=1, estado='en_uso' WHERE id=? LIMIT 1");
-            $stmt->bind_param("i", $equipo_id);
-            $stmt->execute();
-
-            header("Location: estudiante_equipo.php?serial=" . urlencode($serial));
-            exit;
+            $ok = "Solicitud enviada. Esperando aprobación.";
         }
     } elseif ($accion === 'devolver') {
-        if (!$prestamo_act) {
+        if (!$prestamo_act || $prestamo_act['estado'] !== 'activo') {
             $error = "No hay préstamo activo para este equipo.";
         } elseif (!$yo_lo_tengo) {
             $error = "Solo quien tiene el préstamo puede devolverlo.";
@@ -88,224 +84,108 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-
 <!doctype html>
 <html lang="es">
-
 <head>
-    <meta charset="utf-8">
-    <title>Equipo — Estudiante</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        /* --- estilo igual que tu versión previa --- */
-        body {
-            font-family: system-ui, Segoe UI, Arial, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-            margin: 0
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px;
-            background: #111827
-        }
-
-        a {
-            color: #93c5fd;
-            text-decoration: none
-        }
-
-        .container {
-            padding: 24px;
-            max-width: 1000px;
-            margin: auto
-        }
-
-        .grid {
-            display: grid;
-            gap: 24px;
-            grid-template-columns: 1.2fr .8fr
-        }
-
-        .card {
-            background: #111827;
-            border: 1px solid #1f2937;
-            border-radius: 12px;
-            padding: 16px
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse
-        }
-
-        th,
-        td {
-            padding: 10px;
-            border-bottom: 1px solid #1f2937;
-            text-align: left
-        }
-
-        th {
-            color: #93c5fd;
-            background: #0b1220
-        }
-
-        .badge {
-            padding: 4px 8px;
-            border-radius: 9999px;
-            font-size: 12px
-        }
-
-        .ok {
-            background: #052e16;
-            color: #bbf7d0
-        }
-
-        .warn {
-            background: #1f2937;
-            color: #fef08a
-        }
-
-        .bad {
-            background: #450a0a;
-            color: #fecaca
-        }
-
-        input,
-        textarea {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #374151;
-            background: #0b1220;
-            color: #e5e7eb
-        }
-
-        button {
-            padding: 10px 14px;
-            border: 0;
-            border-radius: 8px;
-            background: #2563eb;
-            color: #fff;
-            cursor: pointer;
-            font-weight: 600
-        }
-
-        .muted {
-            color: #9ca3af
-        }
-
-        .error {
-            background: #7f1d1d;
-            color: #fecaca;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 12px
-        }
-
-        .okmsg {
-            background: #052e16;
-            color: #bbf7d0;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 12px
-        }
-    </style>
+<meta charset="utf-8">
+<title>Equipo — Estudiante</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:system-ui,Segoe UI,Arial,sans-serif;background:#0f172a;color:#e2e8f0;margin:0}
+header{display:flex;justify-content:space-between;align-items:center;padding:16px;background:#111827}
+a{color:#93c5fd;text-decoration:none}
+.container{padding:24px;max-width:1000px;margin:auto}
+.grid{display:grid;gap:24px;grid-template-columns:1.2fr .8fr}
+.card{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:16px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;border-bottom:1px solid #1f2937;text-align:left}
+th{color:#93c5fd;background:#0b1220}
+.badge{padding:4px 8px;border-radius:9999px;font-size:12px}
+.ok{background:#052e16;color:#bbf7d0}
+.warn{background:#1f2937;color:#fef08a}
+.bad{background:#450a0a;color:#fecaca}
+input,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #374151;background:#0b1220;color:#e5e7eb}
+button{padding:10px 14px;border:0;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer;font-weight:600}
+.muted{color:#9ca3af}
+.error{background:#7f1d1d;color:#fecaca;padding:10px;border-radius:8px;margin-bottom:12px}
+.okmsg{background:#052e16;color:#bbf7d0;padding:10px;border-radius:8px;margin-bottom:12px}
+</style>
 </head>
-
 <body>
+<header>
+    <div><a href="/prestar_uc/public/estudiantes/estudiante_panel.php">← Panel estudiante</a></div>
+    <div><?= htmlspecialchars($e['nombre'].' '.$e['apellido']) ?> · <a href="/prestar_uc/auth/logout_estudiante.php">Salir</a></div>
+</header>
 
-    <header>
-        <div><a href="/prestar_uc/public/estudiantes/estudiante_panel.php">← Panel estudiante</a></div>
-        <div><?= htmlspecialchars($e['nombre'] . ' ' . $e['apellido']) ?> · <a href="/inventario_uni/public/estudiantes/estudiantes_logout.php">Salir</a></div>
-    </header>
+<div class="container">
+<div class="grid">
 
-    <div class="container">
-        <div class="grid">
+<div class="card">
+    <h2><?= htmlspecialchars($equipo['tipo'].' · '.$equipo['marca'].' '.$equipo['modelo']) ?></h2>
+    <p class="muted">Área: <?= htmlspecialchars($equipo['area']) ?><?= $equipo['sala'] ? ' / '.htmlspecialchars($equipo['sala']) : '' ?></p>
+    <p class="muted">Serial: <?= htmlspecialchars($equipo['serial_interno']) ?></p>
 
-            <div class="card">
-                <h2><?= htmlspecialchars($equipo['tipo'] . ' · ' . $equipo['marca'] . ' ' . $equipo['modelo']) ?></h2>
-                <p class="muted">Área: <?= htmlspecialchars($equipo['area']) ?><?= $equipo['sala'] ? ' / ' . htmlspecialchars($equipo['sala']) : '' ?></p>
-                <p class="muted">Serial: <?= htmlspecialchars($equipo['serial_interno']) ?></p>
-                <p>
-                    Estado:
-                    <?php
-                    $cls = 'ok';
-                    if ($equipo['estado'] === 'dañado' || $equipo['estado'] === 'fuera_servicio') $cls = 'bad';
-                    elseif ($equipo['estado'] === 'en_uso') $cls = 'warn';
-                    ?>
-                    <span class="badge <?= $cls ?>"><?= htmlspecialchars($equipo['estado']) ?></span>
-                    · Prestado: <?= $equipo['prestado'] ? 'Sí' : 'No' ?>
-                </p>
+    <p>
+        Estado:
+        <?php
+        $cls = 'ok';
+        if($equipo['estado']==='dañado'||$equipo['estado']==='fuera_servicio') $cls='bad';
+        elseif($equipo['estado']==='en_uso') $cls='warn';
+        ?>
+        <span class="badge <?= $cls ?>"><?= htmlspecialchars($equipo['estado']) ?></span>
+        · Prestado: <?= $equipo['prestado'] ? 'Sí' : 'No' ?>
+    </p>
 
-                <?php if ($prestamo_act): ?>
-                    <p class="muted">Prestado a: <strong><?= htmlspecialchars($prestamo_act['nombre'] . ' ' . $prestamo_act['apellido']) ?></strong> (CI: <?= htmlspecialchars($prestamo_act['ci']) ?>) — desde <?= htmlspecialchars($prestamo_act['fecha_entrega']) ?></p>
-                <?php endif; ?>
+    <?php if ($error): ?><div class="error"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+    <?php if ($ok): ?><div class="okmsg"><?= htmlspecialchars($ok) ?></div><?php endif; ?>
 
-                <?php if ($error): ?><div class="error"><?= htmlspecialchars($error) ?></div><?php endif; ?>
-                <?php if ($ok): ?><div class="okmsg"><?= htmlspecialchars($ok) ?></div><?php endif; ?>
+    <?php if ($prestamo_act && !$yo_lo_tengo): ?>
+        <?php if ($prestamo_act['estado']=='pendiente'): ?>
+            <p class="muted">Este equipo ha sido solicitado por otro usuario y aún no fue aprobado.</p>
+        <?php else: ?>
+            <p class="muted">Este equipo está actualmente prestado por otro <?= $prestamo_act['d_id'] ? 'docente' : 'estudiante' ?>.</p>
+        <?php endif; ?>
+    <?php endif; ?>
 
-                <?php if (!$prestamo_act): ?>
-                    <form method="post" onsubmit="return confirm('¿Confirmar préstamo de este equipo?');">
-                        <input type="hidden" name="accion" value="prestar">
-                        <label>Destino / Observación (opcional)</label>
-                        <textarea name="observacion" placeholder="Ej.: Sala 203, uso de clase, etc."></textarea>
-                        <button type="submit">Pedir préstamo</button>
-                    </form>
+    <?php if (!$prestamo_act): ?>
+        <form method="post" onsubmit="return confirm('¿Confirmar solicitud de este equipo?');">
+            <input type="hidden" name="accion" value="solicitar">
+            <label>Destino / Observación (opcional)</label>
+            <textarea name="observacion" placeholder="Ej.: Sala 203, uso de clase, etc."></textarea>
+            <button type="submit">Solicitar préstamo</button>
+        </form>
+    <?php elseif ($yo_lo_tengo && $prestamo_act['estado']=='activo'): ?>
+        <form method="post" onsubmit="return confirm('¿Marcar devolución?');" style="margin-top:10px">
+            <input type="hidden" name="accion" value="devolver">
+            <button type="submit">Devolver equipo</button>
+        </form>
+    <?php elseif ($yo_lo_tengo && $prestamo_act['estado']=='pendiente'): ?>
+        <p class="muted">Tu solicitud está pendiente de aprobación.</p>
+    <?php endif; ?>
+</div>
 
-                <?php elseif ($yo_lo_tengo): ?>
-                    <form method="post" onsubmit="return confirm('¿Marcar devolución?');" style="margin-top:10px">
-                        <input type="hidden" name="accion" value="devolver">
-                        <button type="submit">Devolver equipo</button>
-                    </form>
+<div class="card">
+    <h3>“Lo que trae”</h3>
+    <table>
+        <thead>
+            <tr><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+        <?php if (!$componentes): ?>
+            <tr><td colspan="4" class="muted">Sin componentes.</td></tr>
+        <?php else: foreach($componentes as $c): ?>
+            <tr>
+                <td><?= htmlspecialchars($c['tipo']) ?></td>
+                <td><?= htmlspecialchars($c['marca']) ?></td>
+                <td><?= htmlspecialchars($c['modelo']) ?></td>
+                <td><?= htmlspecialchars($c['estado']) ?></td>
+            </tr>
+        <?php endforeach; endif; ?>
+        </tbody>
+    </table>
+</div>
 
-                    <!-- Botón para ir a la página de cesión -->
-                    <form action="estudiante_cesion.php" method="get" style="margin-top:10px">
-                        <input type="hidden" name="prestamo_id" value="<?= htmlspecialchars($prestamo_act['id']) ?>">
-                        <input type="hidden" name="serial" value="<?= htmlspecialchars($equipo['serial_interno']) ?>">
-                        <button type="submit">Ceder equipo</button>
-                    </form>
-
-                <?php else: ?>
-                    <p class="muted">Este equipo está actualmente prestado a otra persona.</p>
-                <?php endif; ?>
-            </div>
-
-            <div class="card">
-                <h3>“Lo que trae”</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Tipo</th>
-                            <th>Marca</th>
-                            <th>Modelo</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (!$componentes): ?>
-                            <tr>
-                                <td colspan="4" class="muted">Sin componentes.</td>
-                            </tr>
-                            <?php else: foreach ($componentes as $c): ?>
-                                <tr>
-                                    <td><?= htmlspecialchars($c['tipo']) ?></td>
-                                    <td><?= htmlspecialchars($c['marca']) ?></td>
-                                    <td><?= htmlspecialchars($c['modelo']) ?></td>
-                                    <td><?= htmlspecialchars($c['estado']) ?></td>
-                                </tr>
-                        <?php endforeach;
-                        endif; ?>
-                    </tbody>
-                </table>
-            </div>
-
-        </div>
-    </div>
+</div>
+</div>
 </body>
-
 </html>
