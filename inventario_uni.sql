@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 09-10-2025 a las 22:20:35
--- Versión del servidor: 10.4.28-MariaDB
--- Versión de PHP: 8.2.4
+-- Tiempo de generación: 16-10-2025 a las 00:52:45
+-- Versión del servidor: 10.4.32-MariaDB
+-- Versión de PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -70,7 +70,9 @@ INSERT INTO `auditoria` (`id`, `usuario_id`, `accion`, `ip_usuario`, `user_agent
 (11, 7, 'Registró el préstamo del equipo ID 6 (Proyector Epson algo) al estudiante Nathi Rotela (CI: 5695298).', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36', '2025-10-09 01:36:02'),
 (12, 7, 'Registró la devolución del equipo ID 6 (Proyector Epson algo). Responsable: Nathi. Devuelto por: Tercero: Pedro (CI: 87654321).', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36', '2025-10-09 01:38:27'),
 (13, 7, 'Registró el préstamo del equipo ID 7 (Proyector 2 Tokyo algo) al estudiante hola como estas (CI: 4567894).', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36', '2025-10-09 15:56:37'),
-(14, 7, 'Registró la devolución del equipo ID 7 (Proyector 2 Tokyo algo). Responsable: hola. Devuelto por: Tercero: gilberto (CI: 789654123).', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36', '2025-10-09 15:57:11');
+(14, 7, 'Registró la devolución del equipo ID 7 (Proyector 2 Tokyo algo). Responsable: hola. Devuelto por: Tercero: gilberto (CI: 789654123).', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36', '2025-10-09 15:57:11'),
+(15, 7, 'Registró la devolución del equipo ID 5 (TV 43 tokyo tffe3). Responsable: Nathi. Devuelto por: Responsable original: Nathi.', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-15 17:10:48'),
+(16, 7, 'Editó los datos del estudiante ID 11 (Alguien De Pueba).', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-15 17:33:28');
 
 -- --------------------------------------------------------
 
@@ -116,6 +118,36 @@ CREATE TABLE `componentes` (
   `observacion` text DEFAULT NULL,
   `creado_en` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `devoluciones`
+--
+
+CREATE TABLE `devoluciones` (
+  `id` int(11) NOT NULL,
+  `prestamo_id` int(11) NOT NULL,
+  `equipo_id` int(11) NOT NULL,
+  `estudiante_id` int(11) NOT NULL,
+  `observacion` text DEFAULT NULL,
+  `estado` enum('pendiente','aprobada','rechazada') NOT NULL DEFAULT 'pendiente',
+  `creada_en` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `devoluciones`
+--
+
+INSERT INTO `devoluciones` (`id`, `prestamo_id`, `equipo_id`, `estudiante_id`, `observacion`, `estado`, `creada_en`) VALUES
+(1, 87, 7, 10, '', 'aprobada', '2025-10-15 21:30:56'),
+(2, 88, 5, 10, '\nMotivo rechazo: ', 'rechazada', '2025-10-15 21:41:51'),
+(3, 88, 5, 10, '', 'aprobada', '2025-10-15 21:42:01'),
+(4, 89, 7, 10, 'Prueba de Kevin\nMotivo rechazo: ', 'rechazada', '2025-10-15 21:45:02'),
+(5, 89, 7, 10, 'Prueba de Kevin', 'aprobada', '2025-10-15 21:45:52'),
+(6, 94, 7, 10, '\nMotivo rechazo: vuelve a llevar', 'rechazada', '2025-10-15 22:21:46'),
+(7, 94, 7, 10, '', 'aprobada', '2025-10-15 22:22:06'),
+(8, 97, 5, 10, '', 'pendiente', '2025-10-15 22:42:19');
 
 -- --------------------------------------------------------
 
@@ -170,9 +202,9 @@ CREATE TABLE `equipos` (
 --
 
 INSERT INTO `equipos` (`id`, `area_id`, `sala_id`, `tipo`, `marca`, `modelo`, `nro_serie`, `serial_interno`, `estado`, `prestado`, `con_reporte`, `detalles`, `creado_en`, `actualizado_en`, `en_mantenimiento`) VALUES
-(5, 1, 2, 'TV 43', 'tokyo', 'tffe3', NULL, '23b47cd5e388', 'bueno', 0, 0, NULL, '2025-09-29 13:22:56', '2025-10-09 05:21:47', 0),
-(6, 1, 1, 'Proyector', 'Epson', 'algo', NULL, 'bdea30c2582c', 'bueno', 0, 0, NULL, '2025-10-08 02:50:38', '2025-10-09 18:54:47', 0),
-(7, 3, 4, 'Proyector 2', 'Tokyo', 'algo', NULL, '58ad8b18cd04', 'disponible', 0, 0, NULL, '2025-10-08 22:39:36', '2025-10-09 18:57:11', 0);
+(5, 1, 2, 'TV 43', 'tokyo', 'tffe3', NULL, '23b47cd5e388', 'en_uso', 1, 0, NULL, '2025-09-29 13:22:56', '2025-10-15 22:39:45', 0),
+(6, 1, 1, 'Proyector', 'Epson', 'algo', NULL, 'bdea30c2582c', 'bueno', 0, 0, NULL, '2025-10-08 02:50:38', '2025-10-15 20:11:36', 0),
+(7, 3, 4, 'Proyector 2', 'Tokyo', 'algo', NULL, '58ad8b18cd04', 'bueno', 0, 0, NULL, '2025-10-08 22:39:36', '2025-10-15 22:22:24', 0);
 
 -- --------------------------------------------------------
 
@@ -201,7 +233,7 @@ INSERT INTO `estudiantes` (`id`, `ci`, `nombre`, `apellido`, `email`, `password_
 (8, '2345678', 'Luis', 'Riquelme', 'alexandergodeater@gmail.com', '$2y$10$D1cTd.BwtTFaoLDqIPaXyeWmxhQDMSwU1NaGP11VBvoKyMvOEvp4O', '2025-09-30 19:13:32'),
 (9, '87654321', 'Pedro', 'Gonzalez', 'pedro@gmail.com', '$2y$10$AJxjd/5G42pNDiRqYfPE0.qD7//fWKSxvu5ePBaEmn1HrLfJYS6MS', '2025-09-30 21:49:40'),
 (10, '5695298', 'Nathi', 'Rotela', 'nathirotela5@gmail.com', '$2y$10$VOIEQ4f8xKPAxS2opWVLCeuMEJBmDmW/FkzRLaPuo7TJt6Aziz0jS', '2025-10-07 03:05:31'),
-(11, '123456', 'Alguien', 'De Pueba', 'nathaliartela5@gmail.com', '$2y$10$TQrPPVKULbAzV1gNPa785uQ.E0RunbMcKtGcI4iyvDLwX9EgT5tT2', '2025-10-07 03:42:12');
+(11, '123456', 'Alguien', 'De Pueba', 'nathaliartela5@gmail.com', '$2y$10$fcabYhHIFq0xlit5yR0U2OD26BuKRRMmhag4g/T0VkESjX8m9BEF2', '2025-10-07 03:42:12');
 
 -- --------------------------------------------------------
 
@@ -338,7 +370,23 @@ INSERT INTO `prestamos` (`id`, `equipo_id`, `estudiante_id`, `docente_id`, `usua
 (32, 5, NULL, 3, 3, '2025-10-06 22:32:27', '2025-10-06 23:36:00', 'devuelto', '', '2025-10-07 01:32:27', NULL, NULL, NULL),
 (71, 6, 10, NULL, NULL, '2025-10-09 01:36:02', '2025-10-09 01:38:27', 'devuelto', 'Queria hacer una última prueba', '2025-10-09 04:36:02', NULL, 'Pedro', '87654321'),
 (80, 6, NULL, 3, 3, '2025-10-09 15:49:18', '2025-10-09 15:54:47', 'devuelto', 'prueba fuego', '2025-10-09 18:46:08', NULL, NULL, NULL),
-(81, 7, 5, NULL, NULL, '2025-10-09 15:56:37', '2025-10-09 15:57:11', 'devuelto', 'Para utilizar', '2025-10-09 18:56:37', NULL, 'gilberto', '789654123');
+(81, 7, 5, NULL, NULL, '2025-10-09 15:56:37', '2025-10-09 15:57:11', 'devuelto', 'Para utilizar', '2025-10-09 18:56:37', NULL, 'gilberto', '789654123'),
+(82, 5, 10, NULL, 10, '2025-10-15 17:05:05', '2025-10-15 17:05:23', 'devuelto', '', '2025-10-15 20:04:54', NULL, NULL, NULL),
+(83, 5, 10, NULL, 10, '2025-10-15 17:06:15', '2025-10-15 17:10:48', 'devuelto', '', '2025-10-15 20:06:02', NULL, NULL, NULL),
+(84, 6, 10, NULL, 10, '2025-10-15 17:11:08', '2025-10-15 17:11:36', 'devuelto', '', '2025-10-15 20:10:58', NULL, NULL, NULL),
+(85, 5, 10, NULL, 10, '2025-10-15 17:13:11', '2025-10-15 17:13:46', 'devuelto', '', '2025-10-15 20:13:03', NULL, NULL, NULL),
+(86, 7, 10, NULL, 10, '2025-10-15 17:19:47', '2025-10-15 17:22:03', 'devuelto', '', '2025-10-15 20:19:43', NULL, NULL, NULL),
+(87, 7, 10, NULL, 10, '2025-10-15 17:31:30', '2025-10-15 18:31:04', 'devuelto', '', '2025-10-15 20:31:23', NULL, NULL, NULL),
+(88, 5, 10, NULL, 10, '2025-10-15 18:41:43', '2025-10-15 18:42:05', 'devuelto', '', '2025-10-15 21:41:30', NULL, NULL, NULL),
+(89, 7, 10, NULL, 10, '2025-10-15 18:44:38', '2025-10-15 18:46:00', 'devuelto', 'Prueba de Kevin', '2025-10-15 21:44:18', NULL, NULL, NULL),
+(90, 7, 10, NULL, NULL, '2025-10-15 18:46:52', NULL, 'cancelado', 'Prestame por favor', '2025-10-15 21:46:52', NULL, NULL, NULL),
+(91, 7, 10, NULL, NULL, '2025-10-15 19:00:02', NULL, 'cancelado', 'Prestame por favor', '2025-10-15 22:00:02', NULL, NULL, NULL),
+(92, 7, 10, NULL, NULL, '2025-10-15 19:06:57', NULL, 'cancelado', '', '2025-10-15 22:06:57', NULL, NULL, NULL),
+(93, 7, 10, NULL, NULL, '2025-10-15 19:20:47', NULL, 'cancelado', '', '2025-10-15 22:20:47', NULL, NULL, NULL),
+(94, 7, 10, NULL, 10, '2025-10-15 19:21:10', '2025-10-15 19:22:24', 'devuelto', '', '2025-10-15 22:21:04', NULL, NULL, NULL),
+(95, 7, 10, NULL, NULL, '2025-10-15 19:23:35', NULL, 'cancelado', 'Otra prueba', '2025-10-15 22:23:35', NULL, NULL, NULL),
+(96, 5, 10, NULL, NULL, '2025-10-15 19:37:28', NULL, 'cancelado', '', '2025-10-15 22:37:28', NULL, NULL, NULL),
+(97, 5, 10, NULL, 10, '2025-10-15 19:39:45', NULL, 'activo', '', '2025-10-15 22:39:31', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -466,6 +514,15 @@ ALTER TABLE `componentes`
   ADD KEY `idx_equipo_tipo` (`equipo_id`,`tipo`);
 
 --
+-- Indices de la tabla `devoluciones`
+--
+ALTER TABLE `devoluciones`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_devoluciones_prestamo` (`prestamo_id`),
+  ADD KEY `fk_devoluciones_equipo` (`equipo_id`),
+  ADD KEY `fk_devoluciones_estudiante` (`estudiante_id`);
+
+--
 -- Indices de la tabla `docentes`
 --
 ALTER TABLE `docentes`
@@ -564,7 +621,7 @@ ALTER TABLE `areas`
 -- AUTO_INCREMENT de la tabla `auditoria`
 --
 ALTER TABLE `auditoria`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT de la tabla `cesiones`
@@ -577,6 +634,12 @@ ALTER TABLE `cesiones`
 --
 ALTER TABLE `componentes`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT de la tabla `devoluciones`
+--
+ALTER TABLE `devoluciones`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de la tabla `docentes`
@@ -618,7 +681,7 @@ ALTER TABLE `password_resets`
 -- AUTO_INCREMENT de la tabla `prestamos`
 --
 ALTER TABLE `prestamos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=98;
 
 --
 -- AUTO_INCREMENT de la tabla `reporte_fallos`
@@ -661,6 +724,14 @@ ALTER TABLE `cesiones`
 --
 ALTER TABLE `componentes`
   ADD CONSTRAINT `fk_componentes_equipo` FOREIGN KEY (`equipo_id`) REFERENCES `equipos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `devoluciones`
+--
+ALTER TABLE `devoluciones`
+  ADD CONSTRAINT `fk_devoluciones_equipo` FOREIGN KEY (`equipo_id`) REFERENCES `equipos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_devoluciones_estudiante` FOREIGN KEY (`estudiante_id`) REFERENCES `estudiantes` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_devoluciones_prestamo` FOREIGN KEY (`prestamo_id`) REFERENCES `prestamos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `equipos`
