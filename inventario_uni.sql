@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 16-10-2025 a las 00:52:45
+-- Tiempo de generación: 16-10-2025 a las 01:21:05
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -147,7 +147,12 @@ INSERT INTO `devoluciones` (`id`, `prestamo_id`, `equipo_id`, `estudiante_id`, `
 (5, 89, 7, 10, 'Prueba de Kevin', 'aprobada', '2025-10-15 21:45:52'),
 (6, 94, 7, 10, '\nMotivo rechazo: vuelve a llevar', 'rechazada', '2025-10-15 22:21:46'),
 (7, 94, 7, 10, '', 'aprobada', '2025-10-15 22:22:06'),
-(8, 97, 5, 10, '', 'pendiente', '2025-10-15 22:42:19');
+(8, 97, 5, 10, '\nMotivo rechazo: no sirve', 'rechazada', '2025-10-15 22:42:19'),
+(9, 97, 5, 10, '\nMotivo rechazo: nop', 'rechazada', '2025-10-15 22:59:28'),
+(10, 97, 5, 10, '', 'aprobada', '2025-10-15 22:59:45'),
+(11, 99, 5, 10, 'Devolver porque no enfocaba', 'aprobada', '2025-10-15 23:00:39'),
+(12, 102, 5, 10, '\nMotivo rechazo: ', 'rechazada', '2025-10-15 23:08:11'),
+(13, 102, 5, 10, '', 'aprobada', '2025-10-15 23:09:18');
 
 -- --------------------------------------------------------
 
@@ -202,9 +207,9 @@ CREATE TABLE `equipos` (
 --
 
 INSERT INTO `equipos` (`id`, `area_id`, `sala_id`, `tipo`, `marca`, `modelo`, `nro_serie`, `serial_interno`, `estado`, `prestado`, `con_reporte`, `detalles`, `creado_en`, `actualizado_en`, `en_mantenimiento`) VALUES
-(5, 1, 2, 'TV 43', 'tokyo', 'tffe3', NULL, '23b47cd5e388', 'en_uso', 1, 0, NULL, '2025-09-29 13:22:56', '2025-10-15 22:39:45', 0),
+(5, 1, 2, 'TV 43', 'tokyo', 'tffe3', NULL, '23b47cd5e388', 'bueno', 0, 0, NULL, '2025-09-29 13:22:56', '2025-10-15 23:09:30', 0),
 (6, 1, 1, 'Proyector', 'Epson', 'algo', NULL, 'bdea30c2582c', 'bueno', 0, 0, NULL, '2025-10-08 02:50:38', '2025-10-15 20:11:36', 0),
-(7, 3, 4, 'Proyector 2', 'Tokyo', 'algo', NULL, '58ad8b18cd04', 'bueno', 0, 0, NULL, '2025-10-08 22:39:36', '2025-10-15 22:22:24', 0);
+(7, 3, 4, 'Proyector 2', 'Tokyo', 'algo', NULL, '58ad8b18cd04', 'en_uso', 1, 0, NULL, '2025-10-08 22:39:36', '2025-10-15 23:09:57', 0);
 
 -- --------------------------------------------------------
 
@@ -386,7 +391,13 @@ INSERT INTO `prestamos` (`id`, `equipo_id`, `estudiante_id`, `docente_id`, `usua
 (94, 7, 10, NULL, 10, '2025-10-15 19:21:10', '2025-10-15 19:22:24', 'devuelto', '', '2025-10-15 22:21:04', NULL, NULL, NULL),
 (95, 7, 10, NULL, NULL, '2025-10-15 19:23:35', NULL, 'cancelado', 'Otra prueba', '2025-10-15 22:23:35', NULL, NULL, NULL),
 (96, 5, 10, NULL, NULL, '2025-10-15 19:37:28', NULL, 'cancelado', '', '2025-10-15 22:37:28', NULL, NULL, NULL),
-(97, 5, 10, NULL, 10, '2025-10-15 19:39:45', NULL, 'activo', '', '2025-10-15 22:39:31', NULL, NULL, NULL);
+(97, 5, 10, NULL, 10, '2025-10-15 19:39:45', '2025-10-15 19:59:49', 'devuelto', '', '2025-10-15 22:39:31', NULL, NULL, NULL),
+(98, 5, 10, NULL, NULL, '2025-10-15 19:59:56', NULL, 'cancelado', '', '2025-10-15 22:59:56', NULL, NULL, NULL),
+(99, 5, 10, NULL, 10, '2025-10-15 20:00:16', '2025-10-15 20:00:43', 'devuelto', '', '2025-10-15 23:00:12', NULL, NULL, NULL),
+(100, 5, 10, NULL, NULL, '2025-10-15 20:01:10', NULL, 'cancelado', '', '2025-10-15 23:01:10', NULL, NULL, NULL),
+(101, 5, 10, NULL, NULL, '2025-10-15 20:07:34', NULL, 'cancelado', '', '2025-10-15 23:07:34', NULL, NULL, NULL),
+(102, 5, 10, NULL, 10, '2025-10-15 20:08:02', '2025-10-15 20:09:30', 'devuelto', '', '2025-10-15 23:07:57', NULL, NULL, NULL),
+(103, 7, 10, NULL, 10, '2025-10-15 20:09:57', NULL, 'activo', '', '2025-10-15 23:09:51', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -639,7 +650,7 @@ ALTER TABLE `componentes`
 -- AUTO_INCREMENT de la tabla `devoluciones`
 --
 ALTER TABLE `devoluciones`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT de la tabla `docentes`
@@ -681,7 +692,7 @@ ALTER TABLE `password_resets`
 -- AUTO_INCREMENT de la tabla `prestamos`
 --
 ALTER TABLE `prestamos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=98;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
 
 --
 -- AUTO_INCREMENT de la tabla `reporte_fallos`
