@@ -18,11 +18,11 @@ $e = est();
 <body>
 
   <header>
-    <a href="/prestar_uc/public/estudiantes/estudiante_panel.php">Inventario — Estudiante</a>
+    <a href="/prestar_UC-main/public/estudiantes/estudiante_panel.php">Inventario — Estudiante</a>
     <div style="display: flex; align-items: center; gap: 10px;">
       <button id="theme-toggle" class="btn-secondary btn-sm" style="width: auto; padding: 6px 12px; margin: 0;">
       </button>
-      <?= htmlspecialchars($e['nombre'] . ' ' . $e['apellido']) ?> · <a href="/prestar_uc/auth/logout_estudiante.php">Salir</a>
+      <?= htmlspecialchars($e['nombre'] . ' ' . $e['apellido']) ?> · <a href="/prestar_UC-main/auth/logout_estudiante.php">Salir</a>
     </div>
   </header>
 
@@ -70,7 +70,7 @@ $e = est();
           } catch (_) {}
 
           setTimeout(() => {
-            window.location.assign(`/prestar_uc/public/estudiantes/estudiante_equipo.php?serial=${encodeURIComponent(serial)}`);
+            window.location.assign(`/prestar_UC-main/public/estudiantes/estudiante_equipo.php?serial=${encodeURIComponent(serial)}`);
           }, 100);
         };
 

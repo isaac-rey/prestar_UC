@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/../init.php';
+require __DIR__ . '/../../init.php';
 require_login();
 
 $data = json_decode(file_get_contents('php://input'), true);

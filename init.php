@@ -13,7 +13,7 @@ function user() {
 
 function require_login() {
   if (!is_logged_in()) {
-    header('Location: /prestar_uc/auth/login.php');
+    header('Location: /prestar_UC-main/auth/login.php');
     exit;
   }
 }

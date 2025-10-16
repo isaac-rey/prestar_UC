@@ -7,69 +7,116 @@ $e = doc();
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>Escanear QR — Docente</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body{font-family:system-ui,Segoe UI,Arial,sans-serif;background:#0f172a;color:#e2e8f0;margin:0}
-    header{display:flex;justify-content:space-between;align-items:center;padding:16px;background:#111827}
-    a{color:#93c5fd;text-decoration:none}
-    .container{padding:24px}
-    #reader{width:100%;max-width:400px;margin:auto}
-  </style>
-  <!-- CDN de html5-qrcode -->
+  <title>Escanear QR – Docente</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <link rel="stylesheet" href="docente_styles.css">
   <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
+
   <header>
-    <div><a href="/prestar_uc/public/docentes/docente_panel.php">← Panel</a></div>
-    <div>Inventario — Docente</div>
-    <div><?=htmlspecialchars($e['nombre'].' '.$e['apellido'])?> · 
-      <a href="/prestar_uc/auth/logout_docente.php">Salir</a>
+    <a href="/prestar_UC-main/public/docentes/docente_panel.php">Inventario – Docente</a>
+    <div>
+      <button id="theme-toggle" class="btn-secondary btn-sm">🌙</button>
+      <?= htmlspecialchars($e['nombre'] . ' ' . $e['apellido']) ?> · 
+      <a href="/prestar_UC-main/auth/logout_docente.php">Salir</a>
     </div>
   </header>
 
   <div class="container">
-    <h2>Escanear QR de un equipo</h2>
-    <div id="reader"></div>
+    <div class="card">
+      <h2>📷 Escanear QR de un equipo</h2>
+
+      <div class="scan-instructions">
+        <p>🎯 <strong>Apuntá la cámara al código QR del equipo</strong></p>
+        <p>El sistema te redirigirá automáticamente a los detalles del equipo</p>
+      </div>
+
+      <div id="reader"></div>
+
+      <div id="status" class="info mt-2" style="display: none;">
+        <span class="loading"></span> Procesando...
+      </div>
+    </div>
   </div>
 
   <script>
     window.addEventListener('load', () => {
-      if (!window.Html5QrcodeScanner) return;
+      if (document.getElementById('reader') && window.Html5QrcodeScanner) {
+        const statusDiv = document.getElementById('status');
 
-      const scanner = new Html5QrcodeScanner("reader", {
-        fps: 10,
-        qrbox: 300,
-        rememberLastUsedCamera: true,
-        formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ],
-        supportedScanTypes: [ Html5QrcodeScanType.SCAN_TYPE_CAMERA ]
+        const scanner = new Html5QrcodeScanner("reader", {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          rememberLastUsedCamera: true,
+          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+          supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+        });
+
+        const gotoEquipo = async (serial) => {
+          statusDiv.style.display = 'block';
+          try { await scanner.clear(); } catch (_) {}
+          setTimeout(() => {
+            window.location.assign(`/prestar_UC-main/public/docentes/docente_equipo.php?serial=${encodeURIComponent(serial)}`);
+          }, 100);
+        };
+
+        const onScanSuccess = async (decodedText) => {
+          let serial = '';
+          try {
+            const u = new URL(decodedText, window.location.origin);
+            serial = u.searchParams.get('serial') || '';
+          } catch (_) {
+            serial = decodedText;
+          }
+          serial = (serial || '').trim();
+          if (!serial) {
+            alert("❌ No se detectó un serial válido en el QR.");
+            return;
+          }
+          await gotoEquipo(serial);
+        };
+
+        const onScanError = (error) => {
+          if (error.includes('NotFoundException')) return;
+          console.warn('Error de escaneo:', error);
+        };
+
+        scanner.render(onScanSuccess, onScanError);
+      }
+    });
+
+    // === TEMA CLARO/OSCURO ===
+    document.addEventListener('DOMContentLoaded', () => {
+      const body = document.body;
+      const toggleButton = document.getElementById('theme-toggle');
+      const storedTheme = localStorage.getItem('theme');
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      let currentTheme = storedTheme || (systemPrefersDark ? 'dark' : 'light');
+
+      function applyTheme(theme) {
+        if (theme === 'light') {
+          body.classList.add('light-mode');
+          toggleButton.innerHTML = '🌙';
+          toggleButton.title = 'Cambiar a Tema Oscuro';
+        } else {
+          body.classList.remove('light-mode');
+          toggleButton.innerHTML = '☀️';
+          toggleButton.title = 'Cambiar a Tema Claro';
+        }
+        currentTheme = theme;
+        localStorage.setItem('theme', theme);
+      }
+
+      applyTheme(currentTheme);
+
+      toggleButton.addEventListener('click', () => {
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        applyTheme(newTheme);
       });
-
-      const gotoEquipo = async (serial) => {
-        try { await scanner.clear(); } catch (_) {}
-        setTimeout(() => {
-          window.location.assign(`/inventario_uni/public/docentes/docente_equipo.php?serial=${encodeURIComponent(serial)}`);
-        }, 60);
-      };
-
-      const onScanSuccess = async (decodedText) => {
-        let serial = '';
-        try {
-          const u = new URL(decodedText, window.location.origin);
-          serial = u.searchParams.get('serial') || '';
-        } catch (_) {
-          serial = decodedText;
-        }
-        serial = (serial || '').trim();
-        if (!serial) {
-          alert("No se detectó un serial válido en el QR.");
-          return;
-        }
-        await gotoEquipo(serial);
-      };
-
-      scanner.render(onScanSuccess);
     });
   </script>
+
 </body>
 </html>

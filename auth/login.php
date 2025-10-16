@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           'nombre' => $row['nombre'],
           'apellido' => $row['apellido']
         ];
-        header('Location: /prestar_uc/public/docentes/docente_panel.php');
+        header('Location: /prestar_UC-main/public/docentes/docente_panel.php');
       } else {
         $_SESSION['est'] = [
           'id' => $row['id'],
@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           'nombre' => $row['nombre'],
           'apellido' => $row['apellido']
         ];
-        header('Location: /prestar_uc/public/estudiantes/estudiante_panel.php');
+        header('Location: /prestar_UC-main/public/estudiantes/estudiante_panel.php');
       }
       exit;
     } else {

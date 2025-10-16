@@ -1,6 +1,6 @@
 <?php
 // public/check_prestamos.php
-require __DIR__ . '/../init.php';
+require __DIR__ . '/../../init.php';
 require_login();
 
 // ----------------------

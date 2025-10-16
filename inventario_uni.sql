@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 16-10-2025 a las 01:21:05
--- Versión del servidor: 10.4.32-MariaDB
--- Versión de PHP: 8.2.12
+-- Tiempo de generación: 16-10-2025 a las 22:02:53
+-- Versión del servidor: 10.4.28-MariaDB
+-- Versión de PHP: 8.2.4
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -72,7 +72,8 @@ INSERT INTO `auditoria` (`id`, `usuario_id`, `accion`, `ip_usuario`, `user_agent
 (13, 7, 'Registró el préstamo del equipo ID 7 (Proyector 2 Tokyo algo) al estudiante hola como estas (CI: 4567894).', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36', '2025-10-09 15:56:37'),
 (14, 7, 'Registró la devolución del equipo ID 7 (Proyector 2 Tokyo algo). Responsable: hola. Devuelto por: Tercero: gilberto (CI: 789654123).', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36', '2025-10-09 15:57:11'),
 (15, 7, 'Registró la devolución del equipo ID 5 (TV 43 tokyo tffe3). Responsable: Nathi. Devuelto por: Responsable original: Nathi.', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-15 17:10:48'),
-(16, 7, 'Editó los datos del estudiante ID 11 (Alguien De Pueba).', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-15 17:33:28');
+(16, 7, 'Editó los datos del estudiante ID 11 (Alguien De Pueba).', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-15 17:33:28'),
+(17, 7, 'Agregó el componente: HDMI Sony ADADA (bueno) al equipo ID 8 (Proyector Sony Jaudini).', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36', '2025-10-16 16:17:51');
 
 -- --------------------------------------------------------
 
@@ -99,7 +100,9 @@ INSERT INTO `cesiones` (`id`, `prestamo_id`, `cedente_id`, `a_docente_id`, `fech
 (1, 32, 2, 3, '2025-10-06 23:07:26', '2025-10-07 04:07:43', 'aceptada', NULL),
 (3, 32, 3, 2, '2025-10-06 23:26:08', '2025-10-07 04:26:18', 'aceptada', NULL),
 (4, 32, 2, 3, '2025-10-06 23:31:40', '2025-10-07 04:32:02', 'aceptada', NULL),
-(34, 80, 2, 3, '2025-10-09 15:54:19', '2025-10-09 20:54:22', 'aceptada', NULL);
+(34, 80, 2, 3, '2025-10-09 15:54:19', '2025-10-09 20:54:22', 'aceptada', NULL),
+(35, 106, 4, 2, '2025-10-16 16:15:23', '2025-10-16 21:19:39', 'aceptada', NULL),
+(36, 104, 2, 4, '2025-10-16 16:20:32', '2025-10-16 21:21:09', 'aceptada', NULL);
 
 -- --------------------------------------------------------
 
@@ -118,6 +121,13 @@ CREATE TABLE `componentes` (
   `observacion` text DEFAULT NULL,
   `creado_en` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `componentes`
+--
+
+INSERT INTO `componentes` (`id`, `equipo_id`, `tipo`, `marca`, `modelo`, `nro_serie`, `estado`, `observacion`, `creado_en`) VALUES
+(5, 8, 'HDMI', 'Sony', 'ADADA', NULL, 'bueno', 'hola que tal ? \r\nbien y vos', '2025-10-16 19:17:51');
 
 -- --------------------------------------------------------
 
@@ -176,7 +186,8 @@ CREATE TABLE `docentes` (
 
 INSERT INTO `docentes` (`id`, `ci`, `nombre`, `apellido`, `email`, `password_hash`, `creado_en`) VALUES
 (2, '5695298', 'Nathalia', 'Prueba', 'nathirotela5@gmail.com', '$2y$10$k/hptHSGqW1wJ2CjG98H6uw3GJ3NwEmG7NPTqg724RhM8aV4mjOWy', '2025-10-07 00:25:34'),
-(3, '123456', 'César', 'Algo', 'nathaliarotela5@gmail.com', '$2y$10$Oue8xWHlZgGZ6KugKEAwB.B7ZuTAPZFvhbdKfbmmfxin/3oL8uVL.', '2025-10-09 18:38:54');
+(3, '123456', 'César', 'Algo', 'nathaliarotela5@gmail.com', '$2y$10$Oue8xWHlZgGZ6KugKEAwB.B7ZuTAPZFvhbdKfbmmfxin/3oL8uVL.', '2025-10-09 18:38:54'),
+(4, '6118463', 'Cristhian', 'Carrera', 'cristhiancarreraasap7@gmail.com', '$2y$10$UqO6W.kZABTUu27FaoRkb.aFNs0Jeq2oUegj7MKRAszF47G0IM.yG', '2025-10-16 16:48:40');
 
 -- --------------------------------------------------------
 
@@ -207,9 +218,10 @@ CREATE TABLE `equipos` (
 --
 
 INSERT INTO `equipos` (`id`, `area_id`, `sala_id`, `tipo`, `marca`, `modelo`, `nro_serie`, `serial_interno`, `estado`, `prestado`, `con_reporte`, `detalles`, `creado_en`, `actualizado_en`, `en_mantenimiento`) VALUES
-(5, 1, 2, 'TV 43', 'tokyo', 'tffe3', NULL, '23b47cd5e388', 'bueno', 0, 0, NULL, '2025-09-29 13:22:56', '2025-10-15 23:09:30', 0),
-(6, 1, 1, 'Proyector', 'Epson', 'algo', NULL, 'bdea30c2582c', 'bueno', 0, 0, NULL, '2025-10-08 02:50:38', '2025-10-15 20:11:36', 0),
-(7, 3, 4, 'Proyector 2', 'Tokyo', 'algo', NULL, '58ad8b18cd04', 'en_uso', 1, 0, NULL, '2025-10-08 22:39:36', '2025-10-15 23:09:57', 0);
+(5, 1, 2, 'TV 43', 'tokyo', 'tffe3', NULL, '23b47cd5e388', 'en_uso', 1, 0, NULL, '2025-09-29 13:22:56', '2025-10-16 16:48:57', 0),
+(6, 1, 1, 'Proyector', 'Epson', 'algo', NULL, 'bdea30c2582c', 'bueno', 0, 0, NULL, '2025-10-08 02:50:38', '2025-10-16 19:19:05', 0),
+(7, 3, 4, 'Proyector 2', 'Tokyo', 'algo', NULL, '58ad8b18cd04', 'en_uso', 1, 0, NULL, '2025-10-08 22:39:36', '2025-10-15 23:09:57', 0),
+(8, 3, 1, 'Proyector', 'Sony', 'Jaudini', NULL, '5df251a4a0e8', 'en_uso', 1, 0, NULL, '2025-10-16 18:49:18', '2025-10-16 18:53:16', 0);
 
 -- --------------------------------------------------------
 
@@ -269,7 +281,9 @@ INSERT INTO `historial_cesiones` (`id`, `prestamo_id`, `de_docente_id`, `a_docen
 (17, 75, 3, 2, NULL, '2025-10-09 14:51:39'),
 (18, 77, 3, 2, NULL, '2025-10-09 15:10:29'),
 (19, 79, 3, 2, NULL, '2025-10-09 15:36:26'),
-(20, 80, 2, 3, NULL, '2025-10-09 15:54:22');
+(20, 80, 2, 3, NULL, '2025-10-09 15:54:22'),
+(21, 106, 4, 2, NULL, '2025-10-16 16:19:39'),
+(22, 104, 2, 4, NULL, '2025-10-16 16:21:09');
 
 -- --------------------------------------------------------
 
@@ -397,7 +411,10 @@ INSERT INTO `prestamos` (`id`, `equipo_id`, `estudiante_id`, `docente_id`, `usua
 (100, 5, 10, NULL, NULL, '2025-10-15 20:01:10', NULL, 'cancelado', '', '2025-10-15 23:01:10', NULL, NULL, NULL),
 (101, 5, 10, NULL, NULL, '2025-10-15 20:07:34', NULL, 'cancelado', '', '2025-10-15 23:07:34', NULL, NULL, NULL),
 (102, 5, 10, NULL, 10, '2025-10-15 20:08:02', '2025-10-15 20:09:30', 'devuelto', '', '2025-10-15 23:07:57', NULL, NULL, NULL),
-(103, 7, 10, NULL, 10, '2025-10-15 20:09:57', NULL, 'activo', '', '2025-10-15 23:09:51', NULL, NULL, NULL);
+(103, 7, 10, NULL, 10, '2025-10-15 20:09:57', NULL, 'activo', '', '2025-10-15 23:09:51', NULL, NULL, NULL),
+(104, 5, NULL, 4, 4, '2025-10-16 13:48:57', NULL, 'activo', 'Sala de informatica', '2025-10-16 16:44:12', NULL, NULL, NULL),
+(105, 8, NULL, 4, 4, '2025-10-16 15:53:16', NULL, 'activo', 'Sala tu prima en tanguita', '2025-10-16 18:53:03', NULL, NULL, NULL),
+(106, 6, NULL, 2, 2, '2025-10-16 15:57:44', '2025-10-16 16:19:05', 'devuelto', 'AJJAJAJAAJA LOCURAAA CCP', '2025-10-16 18:56:59', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -632,19 +649,19 @@ ALTER TABLE `areas`
 -- AUTO_INCREMENT de la tabla `auditoria`
 --
 ALTER TABLE `auditoria`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT de la tabla `cesiones`
 --
 ALTER TABLE `cesiones`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT de la tabla `componentes`
 --
 ALTER TABLE `componentes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `devoluciones`
@@ -656,13 +673,13 @@ ALTER TABLE `devoluciones`
 -- AUTO_INCREMENT de la tabla `docentes`
 --
 ALTER TABLE `docentes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `equipos`
 --
 ALTER TABLE `equipos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de la tabla `estudiantes`
@@ -674,7 +691,7 @@ ALTER TABLE `estudiantes`
 -- AUTO_INCREMENT de la tabla `historial_cesiones`
 --
 ALTER TABLE `historial_cesiones`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT de la tabla `mantenimientos`
@@ -692,7 +709,7 @@ ALTER TABLE `password_resets`
 -- AUTO_INCREMENT de la tabla `prestamos`
 --
 ALTER TABLE `prestamos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=107;
 
 --
 -- AUTO_INCREMENT de la tabla `reporte_fallos`

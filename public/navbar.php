@@ -79,7 +79,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <!-- Usuario dentro del menú -->
                 <li class="nav-item nav-user">
                     <span class="user-name"><?= htmlspecialchars(user()['nombre']) ?></span>
-                    <a href="/inventario_uni/auth/logout.php" class="logout-btn">Salir</a>
+                    <a href="/Prestar_UC-main/auth/logout.php" class="logout-btn">Salir</a>
                 </li>
             </ul>
         </div>

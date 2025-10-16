@@ -168,10 +168,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 <header>
-    <a href="/prestar_uc/public/estudiantes/estudiante_panel.php">Inventario — Estudiante</a>
+    <a href="/prestar_UC-main/public/estudiantes/estudiante_panel.php">Inventario — Estudiante</a>
     <div style="display:flex;gap:10px;align-items:center;">
         <button id="theme-toggle" class="btn-secondary btn-sm">🌙</button>
-        <?= htmlspecialchars($e['nombre'] . ' ' . $e['apellido']) ?> · <a href="/prestar_uc/auth/logout_estudiante.php">Salir</a>
+        <?= htmlspecialchars($e['nombre'] . ' ' . $e['apellido']) ?> · <a href="/prestar_UC-main/auth/logout_estudiante.php">Salir</a>
     </div>
 </header>
 
