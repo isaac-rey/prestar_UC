@@ -1,6 +1,6 @@
 <?php
 // public/prestamos_index.php
-require __DIR__ . '/../init.php';
+require __DIR__ . '/../../init.php';
 require_login();
 
 // Préstamos activos

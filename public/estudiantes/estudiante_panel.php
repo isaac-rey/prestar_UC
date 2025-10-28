@@ -32,202 +32,137 @@ $historial = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 ?>
 <!doctype html>
 <html lang="es">
-
 <head>
   <meta charset="utf-8">
   <title>Panel del estudiante</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    /* --- estilos simplificados --- */
-    body {
-      font-family: system-ui, Arial;
-      background: #0f172a;
-      color: #e2e8f0;
-      margin: 0;
-    }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px;
-      background: #111827;
-    }
-
-    a {
-      color: #93c5fd;
-      text-decoration: none;
-    }
-
-    .container {
-      padding: 24px;
-      max-width: 1100px;
-      margin: auto;
-    }
-
-    .grid {
-      display: grid;
-      gap: 16px;
-      grid-template-columns: 1fr;
-    }
-
-    .card {
-      background: #111827;
-      border: 1px solid #1f2937;
-      border-radius: 12px;
-      padding: 16px;
-    }
-
-    .muted {
-      color: #9ca3af;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th,
-    td {
-      padding: 10px;
-      border-bottom: 1px solid #1f2937;
-      text-align: left;
-    }
-
-    th {
-      color: #93c5fd;
-      background: #0b1220;
-    }
-
-    .btn {
-      display: inline-block;
-      padding: 8px 12px;
-      border-radius: 8px;
-      background: #2563eb;
-      color: #fff;
-      cursor: pointer;
-    }
-
-    .search-form {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-top: 12px;
-    }
-
-    .search-input {
-      padding: 8px;
-      border-radius: 6px;
-      border: 1px solid #374151;
-      background: #1f2937;
-      color: #fff;
-    }
-
-    button {
-      padding: 6px 10px;
-      border: 0;
-      border-radius: 6px;
-      background: #2563eb;
-      color: #fff;
-      cursor: pointer;
-      margin-left: 4px;
-    }
-  </style>
-</head>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <link rel="stylesheet" href="estudiante_styles.css">
+  </head>
 <body>
 
   <header>
-    <div>Inventario — Estudiante</div>
-    <div><?= htmlspecialchars($e['nombre'] . ' ' . $e['apellido']) ?> · <a href="/prestar_uc/auth/logout_estudiante.php">Salir</a></div>
+    <a href="/prestar_UC/public/estudiantes/estudiante_panel.php">Inventario — Estudiante</a>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button id="theme-toggle" class="btn-secondary btn-sm" style="width: auto; padding: 6px 12px; margin: 0;">
+      </button>
+      <?= htmlspecialchars($e['nombre'] . ' ' . $e['apellido']) ?> · <a href="/prestar_UC/auth/logout_estudiante.php">Salir</a>
+    </div>
   </header>
 
   <div class="container">
-    <div class="grid">
+    
+    <div class="card">
+      <h3>¡Hola, <?= htmlspecialchars($e['nombre']) ?>!</h3>
+      <p class="muted">Podés escanear el QR de un equipo para pedir préstamo o devolverlo, o buscarlo por número de serie.</p>
 
-      <!-- Panel principal -->
-      <div class="card">
-        <h3>¡Hola, <?= htmlspecialchars($e['nombre']) ?>!</h3>
-        <p class="muted">Podés escanear el QR de un equipo para pedir préstamo o devolverlo, o buscarlo por número de serie.</p>
-
-        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:12px">
-          <a class="btn" href="/prestar_uc/public/estudiantes/estudiante_scan.php">📷 Escanear QR de un equipo</a>
-          <form class="search-form" method="get" action="/prestar_uc/public/estudiantes/estudiante_equipo.php">
-            <input class="search-input" type="text" name="serial" placeholder="Ingresar N° de serie" required>
-            <button class="btn" type="submit">🔍 Buscar</button>
-          </form>
-        </div>
+      <div class="flex mt-2">
+        <a class="btn" href="/prestar_UC/public/estudiantes/estudiante_scan.php">📷 Escanear QR</a>
       </div>
 
-      <!-- Préstamos activos -->
-      <div class="card">
-        <h2>Mis préstamos activos (<?= count($activos) ?>)</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Equipo</th>
-              <th>Serial</th>
-              <th>Entregado</th>
-              <th>Obs</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php if (!$activos): ?>
-              <tr>
-                <td colspan="5" class="muted">No tenés préstamos activos.</td>
-              </tr>
-              <?php else: foreach ($activos as $p): ?>
-                <tr>
-                  <td><?= htmlspecialchars($p['tipo'] . ' ' . $p['marca'] . ' ' . $p['modelo']) ?></td>
-                  <td><a href="/prestar_uc/public/estudiantes/estudiante_equipo.php?serial=<?= urlencode($p['serial_interno']) ?>"><?= htmlspecialchars($p['serial_interno']) ?></a></td>
-                  <td><?= htmlspecialchars($p['fecha_entrega']) ?></td>
-                  <td><?= htmlspecialchars($p['observacion'] ?? '') ?></td>
-                  <td><a class="btn" href="/prestar_uc/public/estudiantes/estudiante_equipo.php?serial=<?= urlencode($p['serial_interno']) ?>">Ver / Devolver / Ceder</a></td>
-                </tr>
-            <?php endforeach;
-            endif; ?>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Historial -->
-      <div class="card">
-        <h2>Historial reciente</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Equipo</th>
-              <th>Serial</th>
-              <th>Entregado</th>
-              <th>Devuelto</th>
-              <th>Obs</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php if (!$historial): ?>
-              <tr>
-                <td colspan="5" class="muted">Todavía no hay devoluciones registradas.</td>
-              </tr>
-              <?php else: foreach ($historial as $p): ?>
-                <tr>
-                  <td><?= htmlspecialchars($p['tipo'] . ' ' . $p['marca'] . ' ' . $p['modelo']) ?></td>
-                  <td><?= htmlspecialchars($p['serial_interno']) ?></td>
-                  <td><?= htmlspecialchars($p['fecha_entrega']) ?></td>
-                  <td><?= htmlspecialchars($p['fecha_devolucion']) ?></td>
-                  <td><?= htmlspecialchars($p['observacion'] ?? '') ?></td>
-                </tr>
-            <?php endforeach;
-            endif; ?>
-          </tbody>
-        </table>
-      </div>
-
+      <form class="search-form mt-2" method="get" action="/prestar_UC/public/estudiantes/estudiante_equipo.php">
+        <input class="search-input" type="text" name="serial" placeholder="Ingresar N° de serie" required>
+        <button class="btn" type="submit">🔍 Buscar</button>
+      </form>
     </div>
+
+    <div class="card mt-2">
+      <h2>Mis préstamos activos (<?= count($activos) ?>)</h2>
+      
+      <?php if (!$activos): ?>
+        <div class="empty-state">
+          <div class="empty-state-icon">📦</div>
+          <p>No tenés préstamos activos</p>
+        </div>
+      <?php else: ?>
+        <div style="margin-top: 16px;">
+          <?php foreach ($activos as $p): ?>
+            <div class="equipo-item">
+              <div class="equipo-header">
+                <div class="equipo-title">
+                  <?= htmlspecialchars($p['tipo']) ?><br>
+                  <span class="muted" style="font-size: 13px; font-weight: 400;">
+                    <?= htmlspecialchars($p['marca'] . ' ' . $p['modelo']) ?>
+                  </span>
+                </div>
+                <a class="btn btn-sm" href="/prestar_UC/public/estudiantes/estudiante_equipo.php?serial=<?= urlencode($p['serial_interno']) ?>">
+                  Ver
+                </a>
+              </div>
+              
+              <div class="equipo-details">
+                <div class="equipo-detail-row">
+                  <span>🔢 Serial:</span>
+                  <strong><?= htmlspecialchars($p['serial_interno']) ?></strong>
+                </div>
+                <div class="equipo-detail-row">
+                  <span>📅 Desde:</span>
+                  <span><?= htmlspecialchars(date('d/m/Y', strtotime($p['fecha_entrega']))) ?></span>
+                </div>
+                <?php if ($p['observacion']): ?>
+                  <div class="equipo-detail-row">
+                    <span>📝 Obs:</span>
+                    <span><?= htmlspecialchars($p['observacion']) ?></span>
+                  </div>
+                <?php endif; ?>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+    </div>
+
+    <div class="card mt-2">
+      <h2>Historial reciente</h2>
+      
+      <?php if (!$historial): ?>
+        <div class="empty-state">
+          <div class="empty-state-icon">📋</div>
+          <p>Todavía no hay devoluciones registradas</p>
+        </div>
+      <?php else: ?>
+        <div style="margin-top: 16px;">
+          <?php foreach ($historial as $p): ?>
+            <div class="equipo-item">
+              <div class="equipo-title">
+                <?= htmlspecialchars($p['tipo']) ?><br>
+                <span class="muted" style="font-size: 13px; font-weight: 400;">
+                  <?= htmlspecialchars($p['marca'] . ' ' . $p['modelo']) ?>
+                </span>
+              </div>
+              
+              <div class="equipo-details">
+                <div class="equipo-detail-row">
+                  <span>🔢 Serial:</span>
+                  <span><?= htmlspecialchars($p['serial_interno']) ?></span>
+                </div>
+                <div class="equipo-detail-row">
+                  <span>📅 Entregado:</span>
+                  <span><?= htmlspecialchars(date('d/m/Y', strtotime($p['fecha_entrega']))) ?></span>
+                </div>
+                <div class="equipo-detail-row">
+                  <span>✅ Devuelto:</span>
+                  <span><?= htmlspecialchars(date('d/m/Y', strtotime($p['fecha_devolucion']))) ?></span>
+                </div>
+                <?php if ($p['observacion']): ?>
+                  <div class="equipo-detail-row">
+                    <span>📝 Obs:</span>
+                    <span><?= htmlspecialchars($p['observacion']) ?></span>
+                  </div>
+                <?php endif; ?>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+    </div>
+    
+    <div id="cesionesContainer"></div>
+
   </div>
 
   <script>
-    // Función AJAX para aceptar/rechazar cesión
+    // Función AJAX para aceptar/rechazar cesión (Mantengo las funciones si son utilizadas en otro script que alimenta el #cesionesContainer)
     function responderCesion(id, accion) {
       fetch('cesion_responder_ajax.php', {
           method: 'POST',
@@ -247,15 +182,56 @@ $historial = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     function cargarCesiones() {
       fetch('cesiones_listado_ajax.php')
         .then(res => res.text())
-        .then(html => document.getElementById('cesionesContainer').innerHTML = html);
+        .then(html => {
+          const container = document.getElementById('cesionesContainer');
+          if (container) container.innerHTML = html;
+        });
     }
 
+    // === LÓGICA DE TEMA CLARO/OSCURO y Carga Inicial de Cesiones ===
     document.addEventListener('DOMContentLoaded', () => {
-      cargarCesiones();
-      setInterval(cargarCesiones, 10000); // refresca cada 10s
+        // 1. Elementos
+        const body = document.body;
+        const toggleButton = document.getElementById('theme-toggle');
+
+        // 2. Obtener la preferencia guardada o del sistema
+        const storedTheme = localStorage.getItem('theme');
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        // Determinar el tema inicial
+        let currentTheme = storedTheme || (systemPrefersDark ? 'dark' : 'light');
+
+        // 3. Función para aplicar el tema
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                body.classList.add('light-mode');
+                toggleButton.innerHTML = '🌙'; // Icono de luna para cambiar a oscuro
+                toggleButton.title = 'Cambiar a Tema Oscuro';
+            } else {
+                body.classList.remove('light-mode');
+                toggleButton.innerHTML = '☀️'; // Icono de sol para cambiar a claro
+                toggleButton.title = 'Cambiar a Tema Claro';
+            }
+            currentTheme = theme;
+            localStorage.setItem('theme', theme);
+        }
+
+        // 4. Aplicar el tema inicial
+        applyTheme(currentTheme);
+
+        // 5. Listener para el botón de alternancia
+        toggleButton.addEventListener('click', () => {
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(newTheme);
+        });
+
+        // 6. Cargar cesiones (si existe el contenedor)
+        if (document.getElementById('cesionesContainer')) {
+            cargarCesiones();
+            setInterval(cargarCesiones, 10000); // refresca cada 10s
+        }
     });
   </script>
 
 </body>
-
 </html>

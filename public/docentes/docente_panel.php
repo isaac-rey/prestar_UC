@@ -3,20 +3,20 @@ require __DIR__ . '/docente_init.php';
 require_doc_login();
 $e = doc();
 
-// Préstamos activos
+// === PRÉSTAMOS ACTIVOS ===
 $stmt = $mysqli->prepare("
     SELECT p.id, p.equipo_id, p.fecha_entrega, p.observacion,
            e.tipo, e.marca, e.modelo, e.serial_interno
     FROM prestamos p
     JOIN equipos e ON e.id = p.equipo_id
-    WHERE p.docente_id=? AND p.estado='activo'
+    WHERE p.usuario_actual_id=? AND p.estado='activo'
     ORDER BY p.fecha_entrega DESC
 ");
 $stmt->bind_param("i", $e['id']);
 $stmt->execute();
 $activos = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-// Historial devueltos
+// === HISTORIAL DEVUELTOS ===
 $stmt = $mysqli->prepare("
     SELECT p.id, p.equipo_id, p.fecha_entrega, p.fecha_devolucion, p.observacion,
            e.tipo, e.marca, e.modelo, e.serial_interno
@@ -30,294 +30,167 @@ $stmt->bind_param("i", $e['id']);
 $stmt->execute();
 $historial = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 ?>
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
-
 <head>
-  <meta charset="utf-8">
-  <title>Panel del docente</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    /* --- estilos simplificados --- */
-    body {
-      font-family: system-ui, Arial;
-      background: #0f172a;
-      color: #e2e8f0;
-      margin: 0;
-    }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px;
-      background: #111827;
-    }
-
-    a {
-      color: #93c5fd;
-      text-decoration: none;
-    }
-
-    .container {
-      padding: 24px;
-      max-width: 1100px;
-      margin: auto;
-    }
-
-    .grid {
-      display: grid;
-      gap: 16px;
-      grid-template-columns: 1fr;
-    }
-
-    .card {
-      background: #111827;
-      border: 1px solid #1f2937;
-      border-radius: 12px;
-      padding: 16px;
-    }
-
-    .muted {
-      color: #9ca3af;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th,
-    td {
-      padding: 10px;
-      border-bottom: 1px solid #1f2937;
-      text-align: left;
-    }
-
-    th {
-      color: #93c5fd;
-      background: #0b1220;
-    }
-
-    .btn {
-      display: inline-block;
-      padding: 8px 12px;
-      border-radius: 8px;
-      background: #2563eb;
-      color: #fff;
-      cursor: pointer;
-    }
-
-    .search-form {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-top: 12px;
-    }
-
-    .search-input {
-      padding: 8px;
-      border-radius: 6px;
-      border: 1px solid #374151;
-      background: #1f2937;
-      color: #fff;
-    }
-
-    button {
-      padding: 6px 10px;
-      border: 0;
-      border-radius: 6px;
-      background: #2563eb;
-      color: #fff;
-      cursor: pointer;
-      margin-left: 4px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Panel del docente</title>
+<link rel="stylesheet" href="docente_styles.css">
 </head>
-
 <body>
+<header>
+    <a href="/prestar_UC/public/docentes/docente_panel.php">Inventario – Docente</a>
+    <div>
+        <button id="theme-toggle" class="btn-secondary btn-sm">🌙</button>
+        <?= htmlspecialchars($e['nombre'].' '.$e['apellido']) ?> · 
+        <a href="/prestar_UC/auth/logout_docente.php">Salir</a>
+    </div>
+</header>
 
-  <header>
-    <div>Inventario — Docente</div>
-    <div><?= htmlspecialchars($e['nombre'] . ' ' . $e['apellido']) ?> · <a href="/prestar_uc/auth/logout_docente.php">Salir</a></div>
-  </header>
+<div class="container">
 
-  <div class="container">
-    <div class="grid">
-
-      <!-- Panel principal -->
-      <div class="card">
-        <h3>¡Hola, <?= htmlspecialchars($e['nombre']) ?>!</h3>
-        <p class="muted">Podés escanear el QR de un equipo para pedir préstamo o devolverlo, o buscarlo por número de serie.</p>
-
-        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:12px">
-          <a class="btn" href="/prestar_uc/public/docentes/docente_scan.php">📷 Escanear QR de un equipo</a>
-          <form class="search-form" method="get" action="/prestar_uc/public/docentes/docente_equipo.php">
-            <input class="search-input" type="text" name="serial" placeholder="Ingresar N° de serie" required>
-            <button class="btn" type="submit">🔍 Buscar</button>
-          </form>
+    <!-- ACCIÓN PRINCIPAL -->
+    <div class="card main-card">
+        <h2>¡Hola, <?= htmlspecialchars($e['nombre']) ?>!</h2>
+        <p class="muted">Escanea el QR de un equipo o busca por número de serie.</p>
+        <div class="flex main-actions">
+            <a class="btn btn-primary btn-xl" href="/prestar_UC/public/docentes/docente_scan.php">📷 Escanear QR</a>
+            <form class="search-form" method="get" action="/prestar_UC/public/docentes/docente_equipo.php">
+                <input class="search-input" type="text" name="serial" placeholder="Ingresar N° de serie" required>
+                <button class="btn btn-search" type="submit">🔍 Buscar</button>
+            </form>
         </div>
-      </div>
+    </div>
 
-      <!-- Préstamos activos -->
-      <div class="card">
-        <h2>Mis préstamos activos (<?= count($activos) ?>)</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Equipo</th>
-              <th>Serial</th>
-              <th>Entregado</th>
-              <th>Obs</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php if (!$activos): ?>
-              <tr>
-                <td colspan="5" class="muted">No tenés préstamos activos.</td>
-              </tr>
-              <?php else: foreach ($activos as $p): ?>
-                <tr>
-                  <td><?= htmlspecialchars($p['tipo'] . ' ' . $p['marca'] . ' ' . $p['modelo']) ?></td>
-                  <td><a href="/prestar_uc/public/docentes/docente_equipo.php?serial=<?= urlencode($p['serial_interno']) ?>"><?= htmlspecialchars($p['serial_interno']) ?></a></td>
-                  <td><?= htmlspecialchars($p['fecha_entrega']) ?></td>
-                  <td><?= htmlspecialchars($p['observacion'] ?? '') ?></td>
-                  <td><a class="btn" href="/prestar_uc/public/docentes/docente_equipo.php?serial=<?= urlencode($p['serial_interno']) ?>">Ver / Devolver / Ceder</a></td>
-                </tr>
-            <?php endforeach;
-            endif; ?>
-          </tbody>
-        </table>
-      </div>
+    <!-- PRÉSTAMOS ACTIVOS -->
+    <div class="card">
+        <h2>Mis préstamos activos (<span id="count-activos"><?= count($activos) ?></span>)</h2>
+        <div class="scroll-x" id="prestamos-activos-container">
+            <?php if(!$activos): ?>
+                <div class="empty-state"><div class="empty-state-icon">📦</div><p>No tenés préstamos activos</p></div>
+            <?php else: ?>
+                <?php foreach($activos as $p): ?>
+                <div class="equipo-item">
+                    <div class="equipo-header">
+                        <div class="equipo-title"><?= htmlspecialchars($p['tipo']) ?><br><span class="muted"><?= htmlspecialchars($p['marca'].' '.$p['modelo']) ?></span></div>
+                        <a class="btn btn-sm" href="/prestar_UC/public/docentes/docente_equipo.php?serial=<?= urlencode($p['serial_interno']) ?>">Ver</a>
+                    </div>
+                    <div class="equipo-details">
+                        <div><span>🔢 Serial:</span> <?= htmlspecialchars($p['serial_interno']) ?></div>
+                        <div><span>📅 Desde:</span> <?= date('d/m/Y', strtotime($p['fecha_entrega'])) ?></div>
+                        <?php if($p['observacion']): ?><div><span>📝 Obs:</span> <?= htmlspecialchars($p['observacion']) ?></div><?php endif; ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+    </div>
 
-      <!-- Cesiones pendientes -->
-      <div class="card">
+    <!-- CESIONES -->
+    <div class="card">
         <h2>Solicitudes de cesión pendientes</h2>
         <div id="cesionesContainer">
-          <!-- Cargado vía AJAX -->
+            <div class="empty-state"><div class="empty-state-icon">⏳</div><p>Cargando...</p></div>
         </div>
-      </div>
-
-      <!-- Historial -->
-      <div class="card">
-        <h2>Historial reciente</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Equipo</th>
-              <th>Serial</th>
-              <th>Entregado</th>
-              <th>Devuelto</th>
-              <th>Obs</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php if (!$historial): ?>
-              <tr>
-                <td colspan="5" class="muted">Todavía no hay devoluciones registradas.</td>
-              </tr>
-              <?php else: foreach ($historial as $p): ?>
-                <tr>
-                  <td><?= htmlspecialchars($p['tipo'] . ' ' . $p['marca'] . ' ' . $p['modelo']) ?></td>
-                  <td><?= htmlspecialchars($p['serial_interno']) ?></td>
-                  <td><?= htmlspecialchars($p['fecha_entrega']) ?></td>
-                  <td><?= htmlspecialchars($p['fecha_devolucion']) ?></td>
-                  <td><?= htmlspecialchars($p['observacion'] ?? '') ?></td>
-                </tr>
-            <?php endforeach;
-            endif; ?>
-          </tbody>
-        </table>
-      </div>
-
     </div>
-  </div>
 
-  <script>
-    let ultimo_check = Math.floor(Date.now() / 1000);
+    <!-- HISTORIAL -->
+    <div class="card">
+        <h2>Historial reciente</h2>
+        <?php if(!$historial): ?>
+            <div class="empty-state"><div class="empty-state-icon">📋</div><p>Todavía no hay devoluciones registradas</p></div>
+        <?php else: ?>
+            <?php foreach($historial as $p): ?>
+                <div class="equipo-item">
+                    <div class="equipo-title"><?= htmlspecialchars($p['tipo']) ?><br><span class="muted"><?= htmlspecialchars($p['marca'].' '.$p['modelo']) ?></span></div>
+                    <div class="equipo-details">
+                        <div><span>🔢 Serial:</span> <?= htmlspecialchars($p['serial_interno']) ?></div>
+                        <div><span>📅 Entregado:</span> <?= date('d/m/Y', strtotime($p['fecha_entrega'])) ?></div>
+                        <div><span>✅ Devuelto:</span> <?= date('d/m/Y', strtotime($p['fecha_devolucion'])) ?></div>
+                        <?php if($p['observacion']): ?><div><span>📝 Obs:</span> <?= htmlspecialchars($p['observacion']) ?></div><?php endif; ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
 
-    function actualizarPrestamosActivos(prestamos) {
-  const tbody = document.querySelector('div.card table tbody');
-  const contador = document.querySelector('div.card h2'); // el H2 que muestra la cantidad
-  if (!tbody || !contador) return;
+</div>
 
-  tbody.innerHTML = '';
-
-  if (!prestamos || prestamos.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="muted">No tenés préstamos activos.</td></tr>`;
-    contador.textContent = 'Mis préstamos activos (0)';
-    return;
-  }
-
-  contador.textContent = `Mis préstamos activos (${prestamos.length})`;
-
-  prestamos.forEach(p => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-        <td>${p.tipo} ${p.marca} ${p.modelo}</td>
-        <td><a href="/prestar_uc/public/docentes/docente_equipo.php?serial=${encodeURIComponent(p.serial_interno)}">${p.serial_interno}</a></td>
-        <td>${p.fecha_entrega}</td>
-        <td>${p.observacion ?? ''}</td>
-        <td><a class="btn" href="/prestar_uc/public/docentes/docente_equipo.php?serial=${encodeURIComponent(p.serial_interno)}">Ver / Devolver / Ceder</a></td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-
-    function actualizarCesiones(cesiones) {
-      const cont = document.getElementById('cesionesContainer');
-      if (!cont) return;
-
-      if (!cesiones || cesiones.length === 0) {
-        cont.innerHTML = '<p class="muted">No hay solicitudes pendientes.</p>';
+<script>
+function actualizarPrestamosActivos(prestamos){
+    const container=document.getElementById('prestamos-activos-container');
+    const contador=document.getElementById('count-activos');
+    if(!container)return;
+    contador.textContent=prestamos.length;
+    if(!prestamos.length){
+        container.innerHTML=`<div class="empty-state"><div class="empty-state-icon">📦</div><p>No tenés préstamos activos</p></div>`;
         return;
-      }
-
-      let html = '<ul>';
-      cesiones.forEach(c => {
-        html += `<li><strong>${c.cedente_nombre} ${c.cedente_apellido}</strong> quiere cederte <em>${c.equipo_nombre}</em> (Serial: ${c.equipo_serial}) 
-            <button onclick="responderCesion(${c.id},'aceptar')">Aceptar</button> 
-            <button onclick="responderCesion(${c.id},'rechazar')">Rechazar</button></li>`;
-      });
-      html += '</ul>';
-      cont.innerHTML = html;
     }
-
-    function responderCesion(id, accion) {
-    fetch('/prestar_uc/public/docentes/cesion_responder_ajax.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: `cesion_id=${id}&accion=${accion}`
-    })
-    .then(res => res.json())
-    .then(data => {
-        alert(data.message);
-        actualizar(); // refresca la UI inmediatamente
-    })
-    .catch(err => console.error(err));
+    container.innerHTML=prestamos.map(p=>`
+    <div class="equipo-item">
+        <div class="equipo-header">
+            <div class="equipo-title">${p.tipo}<br><span class="muted">${p.marca} ${p.modelo}</span></div>
+            <a class="btn btn-sm" href="/prestar_UC/public/docentes/docente_equipo.php?serial=${encodeURIComponent(p.serial_interno)}">Ver</a>
+        </div>
+        <div class="equipo-details">
+            <div><span>🔢 Serial:</span> ${p.serial_interno}</div>
+            <div><span>📅 Desde:</span> ${new Date(p.fecha_entrega).toLocaleDateString('es-PY')}</div>
+            ${p.observacion?`<div><span>📝 Obs:</span> ${p.observacion}</div>`:''}
+        </div>
+    </div>`).join('');
 }
 
-
-    function actualizar() {
-    fetch('/prestar_uc/public/docentes/actualizaciones_ajax.php')
-        .then(res => res.json())
-        .then(data => {
-            actualizarPrestamosActivos(data.prestamos_activos);
-            actualizarCesiones(data.cesiones);
-        })
-        .catch(console.error);
+function actualizarCesiones(cesiones){
+    const cont=document.getElementById('cesionesContainer');
+    if(!cont)return;
+    if(!cesiones.length){
+        cont.innerHTML=`<div class="empty-state"><div class="empty-state-icon">✅</div><p>No hay solicitudes pendientes</p></div>`;
+        return;
+    }
+    cont.innerHTML=cesiones.map(c=>`
+    <div class="cesion-item">
+        <p><strong>${c.cedente_nombre} ${c.cedente_apellido}</strong> quiere cederte:</p>
+        <p class="muted">📦 ${c.equipo_nombre} (Serial: ${c.equipo_serial})</p>
+        <div class="flex mt-1">
+            <button class="btn btn-sm" onclick="responderCesion(${c.id},'aceptar')">✅ Aceptar</button>
+            <button class="btn-secondary btn-sm" onclick="responderCesion(${c.id},'rechazar')">❌ Rechazar</button>
+        </div>
+    </div>`).join('');
 }
 
-// Ejecutar cada segundo
-setInterval(actualizar, 1000);
-document.addEventListener('DOMContentLoaded', actualizar);
+function responderCesion(id,accion){
+    fetch('/prestar_UC/public/docentes/cesion_responder_ajax.php',{
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:`cesion_id=${id}&accion=${accion}`
+    }).then(res=>res.json()).then(d=>{alert(d.message);actualizar();}).catch(e=>console.error(e));
+}
 
-  </script>
+function actualizar(){
+    fetch('/prestar_UC/public/docentes/actualizaciones_ajax.php')
+    .then(res=>res.json())
+    .then(d=>{
+        actualizarPrestamosActivos(d.prestamos_activos);
+        actualizarCesiones(d.cesiones);
+    }).catch(e=>console.error(e));
+}
 
+document.addEventListener('DOMContentLoaded',()=>{
+    const body=document.body,toggle=document.getElementById('theme-toggle');
+    const stored=localStorage.getItem('theme');
+    const prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
+    let current=stored||(prefersDark?'dark':'light');
+    const apply=t=>{
+        if(t==='light'){body.classList.add('light-mode');toggle.innerHTML='🌙';}
+        else{body.classList.remove('light-mode');toggle.innerHTML='☀️';}
+        localStorage.setItem('theme',t);current=t;
+    };
+    apply(current);
+    toggle.addEventListener('click',()=>apply(current==='dark'?'light':'dark'));
+    actualizar();
+    setInterval(actualizar,2000);
+});
+</script>
 </body>
-
 </html>

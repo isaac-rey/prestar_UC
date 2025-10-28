@@ -13,7 +13,7 @@ function doc() {
 
 function require_doc_login() {
   if (!doc_logged_in()) {
-    header('Location: /prestar_uc/auth/login_docente.php');
+    header('Location: /prestar_UC/auth/login.php');
     exit;
   }
 }

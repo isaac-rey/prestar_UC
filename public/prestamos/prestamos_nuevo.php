@@ -1,6 +1,6 @@
 <?php
 // public/prestamos_nuevo.php
-require __DIR__ . '/../init.php';
+require __DIR__ . '/../../init.php';
 require_login();
 
 $equipo_id = intval($_GET['equipo'] ?? 0);
@@ -117,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </form>
 
       <p class="muted" style="margin-top:10px">
-        ¿El estudiante no existe? <a href="/inventario_uni/public/estudiantes_registro.php" target="_blank">Registrarlo aquí</a>.
+        ¿El estudiante no existe? <a href="/prestar_UC/public/estudiantes_registro.php" target="_blank">Registrarlo aquí</a>.
       </p>
     </div>
   </div>

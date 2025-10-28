@@ -1,6 +1,6 @@
 <?php
 // public/prestamos_devolver.php
-require __DIR__ . '/../init.php';
+require __DIR__ . '/../../init.php';
 require_login();
 
 $equipo_id = intval($_GET['equipo'] ?? 0);
