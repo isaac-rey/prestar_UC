@@ -45,7 +45,7 @@ $componentes = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 // Cesiones recibidas
 $stmt = $mysqli->prepare("
     SELECT c.*, d.nombre AS cedente_nombre, d.apellido AS cedente_apellido,
-           eq.tipo AS equipo_tipo, eq.marca AS equipo_marca, eq.modelo AS equipo_modelo, eq.serial_interno AS equipo_serial
+            eq.tipo AS equipo_tipo, eq.marca AS equipo_marca, eq.modelo AS equipo_modelo, eq.serial_interno AS equipo_serial
     FROM cesiones c
     JOIN docentes d ON d.id=c.cedente_id
     JOIN prestamos p ON p.id=c.prestamo_id
@@ -140,6 +140,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ok = "❌ Préstamo cancelado con éxito.";
             $prestamo_act = null;
             $yo_lo_tengo = false;
+        }
+        // --- FIN Lógica de Cesión ---
+
+    } elseif ($accion === 'cancelar_solicitud') {
+        if (!$prestamo_act || $prestamo_act['estado'] !== 'pendiente') {
+            $error = "No existe una solicitud pendiente que puedas cancelar.";
+        } elseif (!$yo_lo_tengo) {
+            $error = "Solo el solicitante puede cancelar esta solicitud.";
+        } else {
+            $stmt = $mysqli->prepare("UPDATE prestamos SET estado='cancelado' WHERE id=? AND docente_id=? AND estado='pendiente'");
+            $stmt->bind_param("ii", $prestamo_act['id'], $e['id']);
+            $stmt->execute();
+
+            if ($mysqli->affected_rows > 0) {
+                $ok = "❌ Solicitud de préstamo cancelada con éxito.";
+                $prestamo_act = null;
+                $yo_lo_tengo = false;
+            } else {
+                $error = "Error al intentar cancelar la solicitud.";
+            }
         }
     }
 }
@@ -521,4 +541,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 </body>
-</html>
+</html> 
