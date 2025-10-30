@@ -63,6 +63,7 @@ $stmt->execute();
 $componentes = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 $error = '';
+$ok = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $accion = $_POST['accion'] ?? '';

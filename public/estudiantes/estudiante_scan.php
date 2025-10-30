@@ -13,7 +13,7 @@ $e = est();
   <meta name="theme-color" content="#111827">
   <link rel="stylesheet" href="estudiante_styles.css">
   <script src="https://unpkg.com/html5-qrcode"></script>
-  </head>
+</head>
 
 <body>
 
@@ -41,8 +41,7 @@ $e = est();
         <span class="loading"></span> Procesando...
       </div>
     </div>
-    
-    <div id="cesionesContainer"></div>
+
   </div>
 
   <script>
@@ -52,16 +51,60 @@ $e = est();
 
         const statusDiv = document.getElementById('status');
 
-        const scanner = new Html5QrcodeScanner("reader", {
-          fps: 10,
-          qrbox: {
-            width: 250,
-            height: 250
-          },
-          rememberLastUsedCamera: true,
-          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-          supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+        // Intentar abrir directamente la cámara trasera
+        Html5Qrcode.getCameras().then(devices => {
+          if (devices && devices.length) {
+            // Buscar cámara trasera (generalmente contiene 'back' o 'environment' en su label)
+            let backCamera = devices.find(d =>
+              /back|environment/i.test(d.label)
+            ) || devices[0];
+
+            const html5QrCode = new Html5Qrcode("reader");
+
+            html5QrCode.start(
+              backCamera.id, {
+                fps: 10,
+                qrbox: {
+                  width: 250,
+                  height: 250
+                }
+              },
+              async (decodedText) => {
+                  let serial = '';
+
+                  try {
+                    const u = new URL(decodedText, window.location.origin);
+                    serial = u.searchParams.get('serial') || '';
+                  } catch (_) {
+                    serial = decodedText;
+                  }
+
+                  serial = (serial || '').trim();
+
+                  if (!serial) {
+                    alert("❌ No se detectó un serial válido en el QR.");
+                    return;
+                  }
+
+                  document.getElementById('status').style.display = 'block';
+                  await html5QrCode.stop();
+                  setTimeout(() => {
+                    window.location.assign(`/prestar_UC/public/estudiantes/estudiante_equipo.php?serial=${encodeURIComponent(serial)}`);
+                  }, 200);
+                },
+                (error) => {
+                  if (!/NotFoundException/.test(error)) console.warn('Error de escaneo:', error);
+                }
+            ).catch(err => {
+              alert("No se pudo acceder a la cámara: " + err);
+            });
+          } else {
+            alert("No se detectaron cámaras en este dispositivo.");
+          }
+        }).catch(err => {
+          console.error("Error al obtener cámaras:", err);
         });
+
 
         const gotoEquipo = async (serial) => {
           statusDiv.style.display = 'block';
@@ -107,71 +150,71 @@ $e = est();
 
     // === LÓGICA AJAX y TEMA (Consolidada) ===
     function responderCesion(id, accion) {
-        fetch('cesion_responder_ajax.php', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: `cesion_id=${id}&accion=${accion}`
-          })
-          .then(res => res.json())
-          .then(data => {
-            alert(data.message);
-            cargarCesiones();
-          });
+      fetch('cesion_responder_ajax.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: `cesion_id=${id}&accion=${accion}`
+        })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message);
+          cargarCesiones();
+        });
+    }
+
+    function cargarCesiones() {
+      fetch('cesiones_listado_ajax.php')
+        .then(res => res.text())
+        .then(html => {
+          const container = document.getElementById('cesionesContainer');
+          if (container) container.innerHTML = html;
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Elementos
+      const body = document.body;
+      const toggleButton = document.getElementById('theme-toggle');
+
+      // 2. Obtener la preferencia guardada o del sistema
+      const storedTheme = localStorage.getItem('theme');
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+      // Determinar el tema inicial
+      let currentTheme = storedTheme || (systemPrefersDark ? 'dark' : 'light');
+
+      // 3. Función para aplicar el tema
+      function applyTheme(theme) {
+        if (theme === 'light') {
+          body.classList.add('light-mode');
+          toggleButton.innerHTML = '🌙'; // Icono de luna para cambiar a oscuro
+          toggleButton.title = 'Cambiar a Tema Oscuro';
+        } else {
+          body.classList.remove('light-mode');
+          toggleButton.innerHTML = '☀️'; // Icono de sol para cambiar a claro
+          toggleButton.title = 'Cambiar a Tema Claro';
+        }
+        currentTheme = theme;
+        localStorage.setItem('theme', theme);
       }
 
-      function cargarCesiones() {
-        fetch('cesiones_listado_ajax.php')
-          .then(res => res.text())
-          .then(html => {
-            const container = document.getElementById('cesionesContainer');
-            if (container) container.innerHTML = html;
-          });
-      }
-      
-      document.addEventListener('DOMContentLoaded', () => {
-          // 1. Elementos
-          const body = document.body;
-          const toggleButton = document.getElementById('theme-toggle');
+      // 4. Aplicar el tema inicial
+      applyTheme(currentTheme);
 
-          // 2. Obtener la preferencia guardada o del sistema
-          const storedTheme = localStorage.getItem('theme');
-          const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          
-          // Determinar el tema inicial
-          let currentTheme = storedTheme || (systemPrefersDark ? 'dark' : 'light');
-
-          // 3. Función para aplicar el tema
-          function applyTheme(theme) {
-              if (theme === 'light') {
-                  body.classList.add('light-mode');
-                  toggleButton.innerHTML = '🌙'; // Icono de luna para cambiar a oscuro
-                  toggleButton.title = 'Cambiar a Tema Oscuro';
-              } else {
-                  body.classList.remove('light-mode');
-                  toggleButton.innerHTML = '☀️'; // Icono de sol para cambiar a claro
-                  toggleButton.title = 'Cambiar a Tema Claro';
-              }
-              currentTheme = theme;
-              localStorage.setItem('theme', theme);
-          }
-
-          // 4. Aplicar el tema inicial
-          applyTheme(currentTheme);
-
-          // 5. Listener para el botón de alternancia
-          toggleButton.addEventListener('click', () => {
-              const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-              applyTheme(newTheme);
-          });
-
-          // 6. Cargar cesiones (si existe el contenedor)
-          if (document.getElementById('cesionesContainer')) {
-              cargarCesiones();
-              setInterval(cargarCesiones, 10000); 
-          }
+      // 5. Listener para el botón de alternancia
+      toggleButton.addEventListener('click', () => {
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        applyTheme(newTheme);
       });
+
+      // 6. Cargar cesiones (si existe el contenedor)
+      if (document.getElementById('cesionesContainer')) {
+        cargarCesiones();
+        setInterval(cargarCesiones, 10000);
+      }
+    });
   </script>
 
 </body>

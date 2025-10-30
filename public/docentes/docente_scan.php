@@ -5,6 +5,7 @@ $e = doc();
 ?>
 <!doctype html>
 <html lang="es">
+
 <head>
   <meta charset="utf-8">
   <title>Escanear QR – Docente</title>
@@ -13,13 +14,14 @@ $e = doc();
   <link rel="stylesheet" href="docente_styles.css">
   <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
+
 <body>
 
   <header>
     <a href="/prestar_UC/public/docentes/docente_panel.php">Inventario – Docente</a>
     <div>
       <button id="theme-toggle" class="btn-secondary btn-sm">🌙</button>
-      <?= htmlspecialchars($e['nombre'] . ' ' . $e['apellido']) ?> · 
+      <?= htmlspecialchars($e['nombre'] . ' ' . $e['apellido']) ?> ·
       <a href="/prestar_UC/auth/logout_docente.php">Salir</a>
     </div>
   </header>
@@ -46,17 +48,66 @@ $e = doc();
       if (document.getElementById('reader') && window.Html5QrcodeScanner) {
         const statusDiv = document.getElementById('status');
 
-        const scanner = new Html5QrcodeScanner("reader", {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          rememberLastUsedCamera: true,
-          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-          supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+        // Intentar abrir directamente la cámara trasera
+        Html5Qrcode.getCameras().then(devices => {
+          if (devices && devices.length) {
+            // Buscar cámara trasera (generalmente contiene 'back' o 'environment' en su label)
+            let backCamera = devices.find(d =>
+              /back|environment/i.test(d.label)
+            ) || devices[0];
+
+            const html5QrCode = new Html5Qrcode("reader");
+
+            html5QrCode.start(
+              backCamera.id, {
+                fps: 10,
+                qrbox: {
+                  width: 250,
+                  height: 250
+                }
+              },
+              async (decodedText) => {
+                  let serial = '';
+
+                  try {
+                    const u = new URL(decodedText, window.location.origin);
+                    serial = u.searchParams.get('serial') || '';
+                  } catch (_) {
+                    serial = decodedText;
+                  }
+
+                  serial = (serial || '').trim();
+
+                  if (!serial) {
+                    alert("❌ No se detectó un serial válido en el QR.");
+                    return;
+                  }
+
+                  document.getElementById('status').style.display = 'block';
+                  await html5QrCode.stop();
+                  setTimeout(() => {
+                    window.location.assign(`/prestar_UC/public/docentes/docente_equipo.php?serial=${encodeURIComponent(serial)}`);
+                  }, 200);
+                },
+                (error) => {
+                  if (!/NotFoundException/.test(error)) console.warn('Error de escaneo:', error);
+                }
+            ).catch(err => {
+              alert("No se pudo acceder a la cámara: " + err);
+            });
+          } else {
+            alert("No se detectaron cámaras en este dispositivo.");
+          }
+        }).catch(err => {
+          console.error("Error al obtener cámaras:", err);
         });
+
 
         const gotoEquipo = async (serial) => {
           statusDiv.style.display = 'block';
-          try { await scanner.clear(); } catch (_) {}
+          try {
+            await scanner.clear();
+          } catch (_) {}
           setTimeout(() => {
             window.location.assign(`/prestar_UC/public/docentes/docente_equipo.php?serial=${encodeURIComponent(serial)}`);
           }, 100);
@@ -119,4 +170,5 @@ $e = doc();
   </script>
 
 </body>
+
 </html>

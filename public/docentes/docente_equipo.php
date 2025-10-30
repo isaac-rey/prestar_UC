@@ -141,8 +141,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $prestamo_act = null;
             $yo_lo_tengo = false;
         }
-        // --- FIN Lógica de Cesión ---
-
     } elseif ($accion === 'cancelar_solicitud') {
         if (!$prestamo_act || $prestamo_act['estado'] !== 'pendiente') {
             $error = "No existe una solicitud pendiente que puedas cancelar.";
@@ -167,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Refrescar préstamo si hubo POST
 $stmt = $mysqli->prepare("
     SELECT p.*, d.id AS d_id, d.nombre AS d_nombre, d.apellido AS d_apellido,
-           est.id AS e_id, est.nombre AS e_nombre, est.apellido AS e_apellido, p.usuario_actual_id
+            est.id AS e_id, est.nombre AS e_nombre, est.apellido AS e_apellido, p.usuario_actual_id
     FROM prestamos p
     LEFT JOIN docentes d ON d.id = p.docente_id
     LEFT JOIN estudiantes est ON est.id = p.estudiante_id
@@ -189,7 +187,55 @@ $yo_lo_tengo = $prestamo_act && intval($prestamo_act['usuario_actual_id']) === i
     <meta name="theme-color" content="#111827">
     <link rel="stylesheet" href="docente_styles.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</head>
+    
+    <style>
+        .pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1 }
+            50% { opacity: .5 }
+        }
+        
+        .feedback-box {
+            background: #f3f0ff; 
+            border-left: 4px solid #7b5ce6; 
+            padding: 14px; 
+            border-radius: 8px;
+            margin-top: 10px;
+            position: relative;
+            max-width: 100%;
+            word-break: break-word;
+            color: #333;
+        }
+
+        .feedback-box .close-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            cursor: pointer;
+            color: #555;
+            line-height: 1;
+            width: auto;
+            height: auto;
+            padding: 2px 4px;
+            z-index: 10;
+        }
+
+        .feedback-box strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .feedback-box .close-btn:hover {
+            color: #000;
+        }
+    </style>
+    </head>
 <body>
 <header>
     <a href="/prestar_UC/public/docentes/docente_panel.php">Inventario – Docente</a>
@@ -242,6 +288,13 @@ $yo_lo_tengo = $prestamo_act && intval($prestamo_act['usuario_actual_id']) === i
         <?php elseif ($prestamo_act['estado']=='activo' || $prestamo_act['estado']=='pendiente_devolucion'): ?>
             <div class="okmsg mt-2">✅ Tenés este equipo prestado</div>
 
+            <?php if (!empty($prestamo_act['observacion'])): ?>
+                <div id="observacion-msg" class="feedback-box">
+                    <button type="button" class="close-btn" onclick="this.parentElement.remove()">✖</button>
+                    <strong>💬 Observación del administrador:</strong><br>
+                    <?= nl2br(htmlspecialchars($prestamo_act['observacion'])) ?>
+                </div>
+            <?php endif; ?>
             <form method="post" class="mt-2" onsubmit="return confirm('¿Seguro que querés cancelar este préstamo activo?');">
                 <input type="hidden" name="accion" value="cancelar_solicitud">
                 <button type="submit" class="btn-danger mt-2">❌ Cancelar Préstamo</button>
@@ -257,7 +310,6 @@ $yo_lo_tengo = $prestamo_act && intval($prestamo_act['usuario_actual_id']) === i
     <?php endif; ?>
 </div>
 
-<!-- Buscador de docentes ahora fuera de #prestamo-status -->
 <?php if ($yo_lo_tengo && $prestamo_act && $prestamo_act['estado']=='activo'): ?>
 <div class="busqueda-docente" style="margin-top:12px">
     <h4>Ceder préstamo a otro docente</h4>
@@ -300,8 +352,7 @@ $yo_lo_tengo = $prestamo_act && intval($prestamo_act['usuario_actual_id']) === i
             <?php endif; ?>
         </div>
 
-        <!-- CESIONES PENDIENTES HACIA TI -->
-<div class="card" id="cesionesCard" style="display:none;">
+        <div class="card" id="cesionesCard" style="display:none;">
     <h3>Cesiones pendientes hacia ti</h3>
     <div id="cesionesContainer"></div>
 </div>
@@ -406,6 +457,8 @@ function actualizarEstadoPrestamo() {
         .then(response => response.text())
         .then(fullHtml => {
             const parser = new DOMParser();
+            // Nota: Se asume que tienes un endpoint AJAX dedicado, o que el archivo completo 
+            // se está cargando con ?ajax=true, lo que requiere que doc.getElementById('prestamo-status') funcione.
             const doc = parser.parseFromString(fullHtml, 'text/html');
             const newStatusHtml = doc.getElementById('prestamo-status').innerHTML;
             
@@ -541,4 +594,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 </body>
-</html> 
+</html>

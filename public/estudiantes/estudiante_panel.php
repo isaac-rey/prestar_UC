@@ -157,12 +157,12 @@ $historial = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
       <?php endif; ?>
     </div>
     
-    <div id="cesionesContainer"></div>
 
   </div>
 
   <script>
     // Función AJAX para aceptar/rechazar cesión (Mantengo las funciones si son utilizadas en otro script que alimenta el #cesionesContainer)
+    
     function responderCesion(id, accion) {
       fetch('cesion_responder_ajax.php', {
           method: 'POST',
@@ -186,7 +186,7 @@ $historial = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
           const container = document.getElementById('cesionesContainer');
           if (container) container.innerHTML = html;
         });
-    }
+    } 
 
     // === LÓGICA DE TEMA CLARO/OSCURO y Carga Inicial de Cesiones ===
     document.addEventListener('DOMContentLoaded', () => {
