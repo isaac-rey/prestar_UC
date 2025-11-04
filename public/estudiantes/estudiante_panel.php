@@ -42,11 +42,11 @@ $historial = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 <body>
 
   <header>
-    <a href="/prestar_UC/public/estudiantes/estudiante_panel.php">Inventario — Estudiante</a>
+    <a href="/prestar_uc/public/estudiantes/estudiante_panel.php">Inventario — Estudiante</a>
     <div style="display: flex; align-items: center; gap: 10px;">
       <button id="theme-toggle" class="btn-secondary btn-sm" style="width: auto; padding: 6px 12px; margin: 0;">
       </button>
-      <?= htmlspecialchars($e['nombre'] . ' ' . $e['apellido']) ?> · <a href="/prestar_UC/auth/logout_estudiante.php">Salir</a>
+      <?= htmlspecialchars($e['nombre'] . ' ' . $e['apellido']) ?> · <a href="/prestar_uc/auth/logout_estudiante.php">Salir</a>
     </div>
   </header>
 
@@ -57,10 +57,10 @@ $historial = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
       <p class="muted">Podés escanear el QR de un equipo para pedir préstamo o devolverlo, o buscarlo por número de serie.</p>
 
       <div class="flex mt-2">
-        <a class="btn" href="/prestar_UC/public/estudiantes/estudiante_scan.php">📷 Escanear QR</a>
+        <a class="btn" href="/prestar_uc/public/estudiantes/estudiante_scan.php">📷 Escanear QR</a>
       </div>
 
-      <form class="search-form mt-2" method="get" action="/prestar_UC/public/estudiantes/estudiante_equipo.php">
+      <form class="search-form mt-2" method="get" action="/prestar_uc/public/estudiantes/estudiante_equipo.php">
         <input class="search-input" type="text" name="serial" placeholder="Ingresar N° de serie" required>
         <button class="btn" type="submit">🔍 Buscar</button>
       </form>
@@ -85,7 +85,7 @@ $historial = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                     <?= htmlspecialchars($p['marca'] . ' ' . $p['modelo']) ?>
                   </span>
                 </div>
-                <a class="btn btn-sm" href="/prestar_UC/public/estudiantes/estudiante_equipo.php?serial=<?= urlencode($p['serial_interno']) ?>">
+                <a class="btn btn-sm" href="/prestar_uc/public/estudiantes/estudiante_equipo.php?serial=<?= urlencode($p['serial_interno']) ?>">
                   Ver
                 </a>
               </div>
@@ -156,13 +156,12 @@ $historial = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         </div>
       <?php endif; ?>
     </div>
-    
+
 
   </div>
 
   <script>
     // Función AJAX para aceptar/rechazar cesión (Mantengo las funciones si son utilizadas en otro script que alimenta el #cesionesContainer)
-    
     function responderCesion(id, accion) {
       fetch('cesion_responder_ajax.php', {
           method: 'POST',
@@ -186,7 +185,7 @@ $historial = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
           const container = document.getElementById('cesionesContainer');
           if (container) container.innerHTML = html;
         });
-    } 
+    }
 
     // === LÓGICA DE TEMA CLARO/OSCURO y Carga Inicial de Cesiones ===
     document.addEventListener('DOMContentLoaded', () => {

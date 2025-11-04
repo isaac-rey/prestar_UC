@@ -20,9 +20,12 @@ $equipo = $stmt->get_result()->fetch_assoc();
 if (!$equipo) die("Equipo no encontrado.");
 $equipo_id = intval($equipo['id']);
 
-// Buscar préstamo activo o pendiente
+// ✅ CORRECCIÓN: Buscar préstamo con información completa del usuario actual
 $stmt = $mysqli->prepare("
-    SELECT p.*, d.id AS d_id, est.id AS e_id, p.usuario_actual_id
+    SELECT p.*, 
+           d.id AS d_id, d.nombre AS d_nombre, d.apellido AS d_apellido,
+           est.id AS e_id, est.nombre AS e_nombre, est.apellido AS e_apellido,
+           p.usuario_actual_id
     FROM prestamos p
     LEFT JOIN docentes d ON d.id = p.docente_id
     LEFT JOIN estudiantes est ON est.id = p.estudiante_id
@@ -34,7 +37,19 @@ $stmt->bind_param("i", $equipo_id);
 $stmt->execute();
 $prestamo_act = $stmt->get_result()->fetch_assoc();
 
-$yo_lo_tengo = $prestamo_act && intval($prestamo_act['usuario_actual_id']) === intval($e['id']);
+// ✅ CORRECCIÓN: Determinar correctamente quién tiene el préstamo
+if ($prestamo_act) {
+    // Si existe usuario_actual_id, usar ese
+    if ($prestamo_act['usuario_actual_id']) {
+        $yo_lo_tengo = (intval($prestamo_act['usuario_actual_id']) === intval($e['id']));
+    } 
+    // Si no, verificar si soy el docente original
+    else {
+        $yo_lo_tengo = ($prestamo_act['d_id'] && intval($prestamo_act['d_id']) === intval($e['id']));
+    }
+} else {
+    $yo_lo_tengo = false;
+}
 
 // Componentes del equipo
 $stmt = $mysqli->prepare("SELECT * FROM componentes WHERE equipo_id=? ORDER BY creado_en DESC");
@@ -141,31 +156,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $prestamo_act = null;
             $yo_lo_tengo = false;
         }
-    } elseif ($accion === 'cancelar_solicitud') {
-        if (!$prestamo_act || $prestamo_act['estado'] !== 'pendiente') {
-            $error = "No existe una solicitud pendiente que puedas cancelar.";
-        } elseif (!$yo_lo_tengo) {
-            $error = "Solo el solicitante puede cancelar esta solicitud.";
-        } else {
-            $stmt = $mysqli->prepare("UPDATE prestamos SET estado='cancelado' WHERE id=? AND docente_id=? AND estado='pendiente'");
-            $stmt->bind_param("ii", $prestamo_act['id'], $e['id']);
-            $stmt->execute();
-
-            if ($mysqli->affected_rows > 0) {
-                $ok = "❌ Solicitud de préstamo cancelada con éxito.";
-                $prestamo_act = null;
-                $yo_lo_tengo = false;
-            } else {
-                $error = "Error al intentar cancelar la solicitud.";
-            }
-        }
     }
 }
 
-// Refrescar préstamo si hubo POST
+// ✅ CORRECCIÓN: Refrescar préstamo después del POST
 $stmt = $mysqli->prepare("
-    SELECT p.*, d.id AS d_id, d.nombre AS d_nombre, d.apellido AS d_apellido,
-            est.id AS e_id, est.nombre AS e_nombre, est.apellido AS e_apellido, p.usuario_actual_id
+    SELECT p.*, 
+           d.id AS d_id, d.nombre AS d_nombre, d.apellido AS d_apellido,
+           est.id AS e_id, est.nombre AS e_nombre, est.apellido AS e_apellido,
+           p.usuario_actual_id
     FROM prestamos p
     LEFT JOIN docentes d ON d.id = p.docente_id
     LEFT JOIN estudiantes est ON est.id = p.estudiante_id
@@ -175,7 +174,17 @@ $stmt = $mysqli->prepare("
 $stmt->bind_param("i", $equipo_id);
 $stmt->execute();
 $prestamo_act = $stmt->get_result()->fetch_assoc();
-$yo_lo_tengo = $prestamo_act && intval($prestamo_act['usuario_actual_id']) === intval($e['id']);
+
+// Recalcular yo_lo_tengo
+if ($prestamo_act) {
+    if ($prestamo_act['usuario_actual_id']) {
+        $yo_lo_tengo = (intval($prestamo_act['usuario_actual_id']) === intval($e['id']));
+    } else {
+        $yo_lo_tengo = ($prestamo_act['d_id'] && intval($prestamo_act['d_id']) === intval($e['id']));
+    }
+} else {
+    $yo_lo_tengo = false;
+}
 ?>
 
 <!doctype html>
@@ -268,9 +277,51 @@ $yo_lo_tengo = $prestamo_act && intval($prestamo_act['usuario_actual_id']) === i
 
             <div id="prestamo-status">
     <?php if ($prestamo_act && !$yo_lo_tengo): ?>
+        <!-- ✅ CORRECCIÓN: Mostrar correctamente quién tiene el préstamo -->
         <div class="info mt-2">
-            <?= $prestamo_act['estado']=='pendiente' ? '⏳ Este equipo fue solicitado y espera aprobación.' : '🔒 Este equipo está prestado por otro usuario.' ?>
+            <?php if ($prestamo_act['estado']=='pendiente'): ?>
+                ⏳ Este equipo fue solicitado y espera aprobación.
+            <?php else: ?>
+                🔒 Este equipo está prestado por: 
+                <strong>
+                    <?php 
+                    // Primero verificar usuario_actual_id
+                    if ($prestamo_act['usuario_actual_id']) {
+                        // Buscar en docentes
+                        $stmt_user = $mysqli->prepare("SELECT nombre, apellido FROM docentes WHERE id=? LIMIT 1");
+                        $stmt_user->bind_param("i", $prestamo_act['usuario_actual_id']);
+                        $stmt_user->execute();
+                        $usuario_actual = $stmt_user->get_result()->fetch_assoc();
+                        
+                        if ($usuario_actual) {
+                            echo htmlspecialchars($usuario_actual['nombre'] . ' ' . $usuario_actual['apellido']);
+                        } else {
+                            // Buscar en estudiantes
+                            $stmt_user = $mysqli->prepare("SELECT nombre, apellido FROM estudiantes WHERE id=? LIMIT 1");
+                            $stmt_user->bind_param("i", $prestamo_act['usuario_actual_id']);
+                            $stmt_user->execute();
+                            $usuario_actual = $stmt_user->get_result()->fetch_assoc();
+                            
+                            if ($usuario_actual) {
+                                echo htmlspecialchars($usuario_actual['nombre'] . ' ' . $usuario_actual['apellido']);
+                            } else {
+                                echo 'otro usuario';
+                            }
+                        }
+                    }
+                    // Si no hay usuario_actual_id, mostrar el solicitante original
+                    elseif ($prestamo_act['e_id']) {
+                        echo htmlspecialchars($prestamo_act['e_nombre'] . ' ' . $prestamo_act['e_apellido']);
+                    } elseif ($prestamo_act['d_id']) {
+                        echo htmlspecialchars($prestamo_act['d_nombre'] . ' ' . $prestamo_act['d_apellido']);
+                    } else {
+                        echo 'otro usuario';
+                    }
+                    ?>
+                </strong>
+            <?php endif; ?>
         </div>
+
     <?php elseif (!$prestamo_act): ?>
         <form method="post" class="mt-3">
             <input type="hidden" name="accion" value="solicitar">
@@ -278,6 +329,7 @@ $yo_lo_tengo = $prestamo_act && intval($prestamo_act['usuario_actual_id']) === i
             <textarea name="observacion" id="obs-textarea" placeholder="Ej.: Sala 203, uso de clase, etc."></textarea>
             <button type="submit" class="mt-2">📋 Solicitar préstamo</button>
         </form>
+
     <?php elseif ($yo_lo_tengo): ?>
         <?php if ($prestamo_act['estado']=='pendiente'): ?>
             <div class="warning mt-2 pulse">⏳ Tu solicitud está pendiente de aprobación.</div>
@@ -285,27 +337,33 @@ $yo_lo_tengo = $prestamo_act && intval($prestamo_act['usuario_actual_id']) === i
                 <input type="hidden" name="accion" value="cancelar_solicitud">
                 <button type="submit" class="btn-secondary mt-2">❌ Cancelar Solicitud</button>
             </form>
-        <?php elseif ($prestamo_act['estado']=='activo' || $prestamo_act['estado']=='pendiente_devolucion'): ?>
+
+        <?php elseif ($prestamo_act['estado']=='activo'): ?>
             <div class="okmsg mt-2">✅ Tenés este equipo prestado</div>
 
             <?php if (!empty($prestamo_act['observacion'])): ?>
                 <div id="observacion-msg" class="feedback-box">
                     <button type="button" class="close-btn" onclick="this.parentElement.remove()">✖</button>
-                    <strong>💬 Observación del administrador:</strong><br>
+                    <strong> Observación del administrador:</strong><br>
                     <?= nl2br(htmlspecialchars($prestamo_act['observacion'])) ?>
                 </div>
             <?php endif; ?>
+
             <form method="post" class="mt-2" onsubmit="return confirm('¿Seguro que querés cancelar este préstamo activo?');">
                 <input type="hidden" name="accion" value="cancelar_solicitud">
                 <button type="submit" class="btn-danger mt-2">❌ Cancelar Préstamo</button>
             </form>
 
-            <?php if ($prestamo_act['estado']=='activo'): ?>
             <form method="post" class="mt-2">
                 <input type="hidden" name="accion" value="devolver">
                 <button type="submit" class="btn-warning mt-2">↩️ Solicitar devolución</button>
             </form>
-            <?php endif; ?>
+
+        <?php elseif ($prestamo_act['estado']=='pendiente_devolucion'): ?>
+            <!-- ✅ NUEVO: Mostrar cuando hay solicitud de devolución pendiente -->
+            <div class="warning mt-2 pulse">⏳ Tu solicitud de devolución está pendiente de aprobación.</div>
+            <p class="muted mt-1">El administrador revisará tu solicitud pronto.</p>
+
         <?php endif; ?>
     <?php endif; ?>
 </div>
@@ -360,7 +418,6 @@ $yo_lo_tengo = $prestamo_act && intval($prestamo_act['usuario_actual_id']) === i
 </div>
 
 <script>
-    // === ACTUALIZAR CESIONES ===
 function actualizarCesiones() {
     fetch('actualizaciones_ajax.php')
         .then(res => res.json())
@@ -389,7 +446,6 @@ function actualizarCesiones() {
         .catch(err => console.error('Error actualizando cesiones:', err));
 }
 
-// === RESPONDER CESIÓN ===
 function responderCesion(id, accion) {
     fetch('cesion_responder_ajax.php', {
         method: 'POST',
@@ -405,11 +461,10 @@ function responderCesion(id, accion) {
             timer: 2000,
             showConfirmButton: false
         });
-        // --- CÓDIGO CORREGIDO: Llamar a la actualización completa ---
         if (d.success) {
-            actualizarEstadoPrestamo(); // Actualiza el estado del préstamo del equipo
+            actualizarEstadoPrestamo();
         }
-        actualizarCesiones(); // Refresca la lista de cesiones pendientes
+        actualizarCesiones();
     })
     .catch(() => {
         Swal.fire({
@@ -422,14 +477,13 @@ function responderCesion(id, accion) {
     });
 }
 
-// === AUTOACTUALIZAR CADA 2 SEGUNDOS ===
 document.addEventListener('DOMContentLoaded', () => {
     actualizarCesiones();
     setInterval(actualizarCesiones, 2000);
 });
+
 const serial = '<?= htmlspecialchars($serial) ?>';
 
-// === PERSISTIR OBSERVACIÓN ===
 function persistirObservacion() {
     const obsTextArea = document.getElementById('obs-textarea');
     if (obsTextArea) {
@@ -443,7 +497,6 @@ function persistirObservacion() {
     }
 }
 
-// === ACTUALIZAR ESTADO DE PRÉSTAMO ===
 function actualizarEstadoPrestamo() {
     const obsTextArea = document.getElementById('obs-textarea');
     const currentObsValue = obsTextArea ? obsTextArea.value : null;
@@ -457,8 +510,6 @@ function actualizarEstadoPrestamo() {
         .then(response => response.text())
         .then(fullHtml => {
             const parser = new DOMParser();
-            // Nota: Se asume que tienes un endpoint AJAX dedicado, o que el archivo completo 
-            // se está cargando con ?ajax=true, lo que requiere que doc.getElementById('prestamo-status') funcione.
             const doc = parser.parseFromString(fullHtml, 'text/html');
             const newStatusHtml = doc.getElementById('prestamo-status').innerHTML;
             
@@ -472,13 +523,11 @@ function actualizarEstadoPrestamo() {
                     if (newObsTextArea) newObsTextArea.value = currentObsValue;
                 }
 
-                // Restaurar búsqueda docente (aunque ahora no se borra)
                 const newSearchInput = document.getElementById('buscar_docente');
                 const newHiddenInput = document.getElementById('a_docente_id');
                 if (newSearchInput) newSearchInput.value = searchValue;
                 if (newHiddenInput) newHiddenInput.value = hiddenValue;
 
-                // Reactivar búsquedas y cesiones
                 inicializarBusquedaDocentes();
                 inicializarCesiones();
             }
@@ -486,7 +535,6 @@ function actualizarEstadoPrestamo() {
         .catch(error => console.error('Error al actualizar estado del préstamo:', error));
 }
 
-// === RESPONDER CESIONES ===
 function inicializarCesiones() {
     document.querySelectorAll('.cesion-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -507,7 +555,6 @@ function inicializarCesiones() {
     });
 }
 
-// === BÚSQUEDA DE DOCENTES ===
 function inicializarBusquedaDocentes() {
     const input = document.getElementById('buscar_docente');
     const resultados = document.getElementById('resultados_busqueda');
@@ -557,7 +604,6 @@ function inicializarBusquedaDocentes() {
     });
 }
 
-// === TEMA CLARO/OSCURO ===
 document.addEventListener('DOMContentLoaded', () => {
     const body = document.body;
     const toggleButton = document.getElementById('theme-toggle');
