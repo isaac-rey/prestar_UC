@@ -13,7 +13,7 @@ $e = est();
   <meta name="theme-color" content="#111827">
   <link rel="stylesheet" href="estudiante_styles.css">
   <script src="https://unpkg.com/html5-qrcode"></script>
-  </head>
+</head>
 
 <body>
 
@@ -41,138 +41,146 @@ $e = est();
         <span class="loading"></span> Procesando...
       </div>
     </div>
-    
-    <div id="cesionesContainer"></div>
+
   </div>
 
+
   <script>
-    window.addEventListener('load', () => {
-      // Solo iniciar el scanner si el elemento existe (para evitar errores si el script se reutiliza)
-      if (document.getElementById('reader') && window.Html5QrcodeScanner) {
+    document.addEventListener("DOMContentLoaded", () => {
+      const readerElem = document.getElementById("reader");
+      const statusDiv = document.getElementById("status");
 
-        const statusDiv = document.getElementById('status');
+      // Detectar iPhone / Safari
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      const isAndroid = /Android/i.test(navigator.userAgent);
 
-        const scanner = new Html5QrcodeScanner("reader", {
-          fps: 10,
-          qrbox: {
-            width: 250,
-            height: 250
-          },
-          rememberLastUsedCamera: true,
-          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-          supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
-        });
+      // Mostrar botón manual si es iPhone o Safari
+      if (isIOS || isSafari) {
+        const btn = document.createElement("button");
+        btn.textContent = "📷 Iniciar escáner";
+        btn.className = "btn";
+        btn.style.margin = "12px auto";
+        btn.onclick = initScanner;
+        readerElem.before(btn);
+      } else {
+        initScanner();
+      }
 
-        const gotoEquipo = async (serial) => {
-          statusDiv.style.display = 'block';
-          try {
-            await scanner.clear();
-          } catch (_) {}
+      function initScanner() {
+        if (!window.Html5Qrcode) {
+          alert("El lector QR no está disponible.");
+          return;
+        }
 
-          setTimeout(() => {
-            window.location.assign(`/prestar_UC/public/estudiantes/estudiante_equipo.php?serial=${encodeURIComponent(serial)}`);
-          }, 100);
-        };
+        Html5Qrcode.getCameras()
+          .then(devices => {
+            if (!devices || !devices.length) {
+              alert("No se detectaron cámaras en este dispositivo.");
+              return;
+            }
 
-        const onScanSuccess = async (decodedText) => {
-          let serial = '';
+            // Buscar cámara trasera por label o última disponible
+            let backCamera =
+              devices.find(d => /back|environment/i.test(d.label)) ||
+              devices[devices.length - 1];
 
-          // Intentar extraer serial de URL o usar texto directo
-          try {
-            const u = new URL(decodedText, window.location.origin);
-            serial = u.searchParams.get('serial') || '';
-          } catch (_) {
-            serial = decodedText;
-          }
+            const html5QrCode = new Html5Qrcode("reader");
 
-          serial = (serial || '').trim();
+            // Configuración adaptativa por sistema
+            const config = {
+              fps: 10,
+              qrbox: {
+                width: 250,
+                height: 250
+              },
+              experimentalFeatures: {
+                useBarCodeDetectorIfSupported: true
+              },
+              videoConstraints: isIOS || isSafari ?
+                {
+                  facingMode: {
+                    exact: "environment"
+                  }
+                } // Safari requiere exact
+                :
+                {
+                  facingMode: "environment"
+                } // Android Chrome más flexible
+            };
 
-          if (!serial) {
-            alert("❌ No se detectó un serial válido en el QR.");
-            return;
-          }
+            html5QrCode
+              .start(backCamera?.id || {
+                  facingMode: "environment"
+                }, config,
+                async (decodedText) => {
+                    let serial = "";
+                    try {
+                      const u = new URL(decodedText, window.location.origin);
+                      serial = u.searchParams.get("serial") || "";
+                    } catch (_) {
+                      serial = decodedText;
+                    }
 
-          await gotoEquipo(serial);
-        };
+                    serial = (serial || "").trim();
+                    if (!serial) {
+                      alert("❌ No se detectó un serial válido en el QR.");
+                      return;
+                    }
 
-        const onScanError = (error) => {
-          // Silenciar errores de escaneo normales
-          if (error.includes('NotFoundException')) return;
-          console.warn('Error de escaneo:', error);
-        };
+                    statusDiv.style.display = "block";
+                    await html5QrCode.stop();
+                    setTimeout(() => {
+                      window.location.assign(`/prestar_UC/public/estudiantes/estudiante_equipo.php?serial=${encodeURIComponent(serial)}`);
+                    }, 200);
+                  },
+                  (errorMsg) => {
+                    if (!/NotFoundException/.test(errorMsg)) console.warn("Error escaneo:", errorMsg);
+                  }
+              )
+              .catch(err => {
+                console.warn("Error de inicio de cámara:", err);
 
-        scanner.render(onScanSuccess, onScanError);
+                // Fallback: intentar sin facingMode si Android falla
+                if (isAndroid) {
+                  html5QrCode.start(
+                    backCamera.id, {
+                      fps: 10,
+                      qrbox: {
+                        width: 250,
+                        height: 250
+                      },
+                      experimentalFeatures: {
+                        useBarCodeDetectorIfSupported: true
+                      }
+                    },
+                    (decodedText) => {
+                      let serial = decodedText.trim();
+                      if (!serial) {
+                        alert("❌ No se detectó un serial válido en el QR.");
+                        return;
+                      }
+                      statusDiv.style.display = "block";
+                      html5QrCode.stop();
+                      setTimeout(() => {
+                        window.location.assign(`/prestar_UC/public/estudiantes/estudiante_equipo.php?serial=${encodeURIComponent(serial)}`);
+                      }, 200);
+                    }
+                  );
+                } else {
+                  alert("⚠️ No se pudo iniciar la cámara. Revisá los permisos.");
+                }
+              });
+          })
+          .catch(err => {
+            console.error("Error al obtener cámaras:", err);
+            alert("No se pudo acceder a la cámara.");
+          });
       }
     });
-
-    // === LÓGICA AJAX y TEMA (Consolidada) ===
-    function responderCesion(id, accion) {
-        fetch('cesion_responder_ajax.php', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: `cesion_id=${id}&accion=${accion}`
-          })
-          .then(res => res.json())
-          .then(data => {
-            alert(data.message);
-            cargarCesiones();
-          });
-      }
-
-      function cargarCesiones() {
-        fetch('cesiones_listado_ajax.php')
-          .then(res => res.text())
-          .then(html => {
-            const container = document.getElementById('cesionesContainer');
-            if (container) container.innerHTML = html;
-          });
-      }
-      
-      document.addEventListener('DOMContentLoaded', () => {
-          // 1. Elementos
-          const body = document.body;
-          const toggleButton = document.getElementById('theme-toggle');
-
-          // 2. Obtener la preferencia guardada o del sistema
-          const storedTheme = localStorage.getItem('theme');
-          const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          
-          // Determinar el tema inicial
-          let currentTheme = storedTheme || (systemPrefersDark ? 'dark' : 'light');
-
-          // 3. Función para aplicar el tema
-          function applyTheme(theme) {
-              if (theme === 'light') {
-                  body.classList.add('light-mode');
-                  toggleButton.innerHTML = '🌙'; // Icono de luna para cambiar a oscuro
-                  toggleButton.title = 'Cambiar a Tema Oscuro';
-              } else {
-                  body.classList.remove('light-mode');
-                  toggleButton.innerHTML = '☀️'; // Icono de sol para cambiar a claro
-                  toggleButton.title = 'Cambiar a Tema Claro';
-              }
-              currentTheme = theme;
-              localStorage.setItem('theme', theme);
-          }
-
-          // 4. Aplicar el tema inicial
-          applyTheme(currentTheme);
-
-          // 5. Listener para el botón de alternancia
-          toggleButton.addEventListener('click', () => {
-              const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-              applyTheme(newTheme);
-          });
-
-          // 6. Cargar cesiones (si existe el contenedor)
-          if (document.getElementById('cesionesContainer')) {
-              cargarCesiones();
-              setInterval(cargarCesiones, 10000); 
-          }
-      });
   </script>
+
+
 
 </body>
 

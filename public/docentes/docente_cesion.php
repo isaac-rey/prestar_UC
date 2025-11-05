@@ -3,6 +3,12 @@ require __DIR__ . '/docente_init.php';
 require_doc_login();
 $e = doc();
 
+// ------------------------------------------------------------------
+// NOTA: Se mantiene la inclusión del init.php, pero se ELIMINA la llamada a auditar.
+// Se recomienda mantener el require, ya que podría ser necesario en el futuro.
+// ------------------------------------------------------------------
+require __DIR__ . '/../../../inventario_uni/init.php'; 
+
 $prestamo_id = intval($_GET['prestamo_id'] ?? 0);
 $serial = trim($_GET['serial'] ?? '');
 if (!$prestamo_id) die("Préstamo no especificado.");
@@ -39,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = "No se encontró el docente receptor.";
         } else {
             $a_docente_id = intval($receptor['id']);
-            $cedente_id = intval($e['id']);
+            $cedente_id = intval($e['id']); // El docente actual es el cedente
 
             // Verificar si ya existe cesión pendiente
             $stmt = $mysqli->prepare("SELECT id FROM cesiones WHERE prestamo_id=? AND estado='pendiente' LIMIT 1");
@@ -56,6 +62,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if ($stmt->execute()) {
                     $ok = "Solicitud de cesión enviada correctamente. El docente receptor debe aceptarla.";
+                    
+                    // ------------------------------------------------------------------
+                    // ⭐ AUDITORÍA ELIMINADA: La auditoría ocurre solo al ACEPTAR en cesion_responder.php.
+                    // ------------------------------------------------------------------
+                    
                 } else {
                     $error = "Error al registrar la cesión. Intente de nuevo.";
                 }

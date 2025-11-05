@@ -7,20 +7,22 @@ header('Content-Type: application/json');
 
 // === CESIONES PENDIENTES ===
 $stmt = $mysqli->prepare("
-    SELECT 
-        c.id,
-        d.nombre AS cedente_nombre,
-        d.apellido AS cedente_apellido,
-        CONCAT(eq.tipo, ' ', IFNULL(eq.marca,''), ' ', IFNULL(eq.modelo,'')) AS equipo_nombre,
-        eq.serial_interno AS equipo_serial
-    FROM cesiones c
-    JOIN docentes d ON c.cedente_id = d.id
-    JOIN prestamos p ON c.prestamo_id = p.id
-    JOIN equipos eq ON p.equipo_id = eq.id
-    WHERE c.a_docente_id = ? 
-      AND c.estado = 'pendiente'
-      AND p.estado = 'activo'
-    ORDER BY c.fecha_solicitud DESC
+ SELECT 
+ c.id,
+ d.nombre AS cedente_nombre,
+ d.apellido AS cedente_apellido,
+ eq.tipo AS equipo_tipo, 
+eq.marca AS equipo_marca, 
+ eq.modelo AS equipo_modelo, 
+ eq.serial_interno AS equipo_serial
+FROM cesiones c
+JOIN docentes d ON c.cedente_id = d.id
+JOIN prestamos p ON c.prestamo_id = p.id
+ JOIN equipos eq ON p.equipo_id = eq.id
+WHERE c.a_docente_id = ? 
+AND c.estado = 'pendiente'
+AND p.estado = 'activo'
+ORDER BY c.fecha_solicitud DESC
 ");
 $stmt->bind_param("i", $e['id']);
 $stmt->execute();

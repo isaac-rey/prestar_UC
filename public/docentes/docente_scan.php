@@ -5,6 +5,7 @@ $e = doc();
 ?>
 <!doctype html>
 <html lang="es">
+
 <head>
   <meta charset="utf-8">
   <title>Escanear QR – Docente</title>
@@ -13,13 +14,14 @@ $e = doc();
   <link rel="stylesheet" href="docente_styles.css">
   <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
+
 <body>
 
   <header>
     <a href="/prestar_UC/public/docentes/docente_panel.php">Inventario – Docente</a>
     <div>
       <button id="theme-toggle" class="btn-secondary btn-sm">🌙</button>
-      <?= htmlspecialchars($e['nombre'] . ' ' . $e['apellido']) ?> · 
+      <?= htmlspecialchars($e['nombre'] . ' ' . $e['apellido']) ?> ·
       <a href="/prestar_UC/auth/logout_docente.php">Salir</a>
     </div>
   </header>
@@ -42,81 +44,139 @@ $e = doc();
   </div>
 
   <script>
-    window.addEventListener('load', () => {
-      if (document.getElementById('reader') && window.Html5QrcodeScanner) {
-        const statusDiv = document.getElementById('status');
+    document.addEventListener("DOMContentLoaded", () => {
+      const readerElem = document.getElementById("reader");
+      const statusDiv = document.getElementById("status");
 
-        const scanner = new Html5QrcodeScanner("reader", {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          rememberLastUsedCamera: true,
-          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-          supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
-        });
+      // Detectar iPhone / Safari
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      const isAndroid = /Android/i.test(navigator.userAgent);
 
-        const gotoEquipo = async (serial) => {
-          statusDiv.style.display = 'block';
-          try { await scanner.clear(); } catch (_) {}
-          setTimeout(() => {
-            window.location.assign(`/prestar_UC/public/docentes/docente_equipo.php?serial=${encodeURIComponent(serial)}`);
-          }, 100);
-        };
-
-        const onScanSuccess = async (decodedText) => {
-          let serial = '';
-          try {
-            const u = new URL(decodedText, window.location.origin);
-            serial = u.searchParams.get('serial') || '';
-          } catch (_) {
-            serial = decodedText;
-          }
-          serial = (serial || '').trim();
-          if (!serial) {
-            alert("❌ No se detectó un serial válido en el QR.");
-            return;
-          }
-          await gotoEquipo(serial);
-        };
-
-        const onScanError = (error) => {
-          if (error.includes('NotFoundException')) return;
-          console.warn('Error de escaneo:', error);
-        };
-
-        scanner.render(onScanSuccess, onScanError);
+      // Mostrar botón manual si es iPhone o Safari
+      if (isIOS || isSafari) {
+        const btn = document.createElement("button");
+        btn.textContent = "📷 Iniciar escáner";
+        btn.className = "btn";
+        btn.style.margin = "12px auto";
+        btn.onclick = initScanner;
+        readerElem.before(btn);
+      } else {
+        initScanner();
       }
-    });
 
-    // === TEMA CLARO/OSCURO ===
-    document.addEventListener('DOMContentLoaded', () => {
-      const body = document.body;
-      const toggleButton = document.getElementById('theme-toggle');
-      const storedTheme = localStorage.getItem('theme');
-      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      let currentTheme = storedTheme || (systemPrefersDark ? 'dark' : 'light');
-
-      function applyTheme(theme) {
-        if (theme === 'light') {
-          body.classList.add('light-mode');
-          toggleButton.innerHTML = '🌙';
-          toggleButton.title = 'Cambiar a Tema Oscuro';
-        } else {
-          body.classList.remove('light-mode');
-          toggleButton.innerHTML = '☀️';
-          toggleButton.title = 'Cambiar a Tema Claro';
+      function initScanner() {
+        if (!window.Html5Qrcode) {
+          alert("El lector QR no está disponible.");
+          return;
         }
-        currentTheme = theme;
-        localStorage.setItem('theme', theme);
+
+        Html5Qrcode.getCameras()
+          .then(devices => {
+            if (!devices || !devices.length) {
+              alert("No se detectaron cámaras en este dispositivo.");
+              return;
+            }
+
+            // Buscar cámara trasera por label o última disponible
+            let backCamera =
+              devices.find(d => /back|environment/i.test(d.label)) ||
+              devices[devices.length - 1];
+
+            const html5QrCode = new Html5Qrcode("reader");
+
+            // Configuración adaptativa por sistema
+            const config = {
+              fps: 10,
+              qrbox: {
+                width: 250,
+                height: 250
+              },
+              experimentalFeatures: {
+                useBarCodeDetectorIfSupported: true
+              },
+              videoConstraints: isIOS || isSafari ? {
+                  facingMode: {
+                    exact: "environment"
+                  }
+                } // Safari requiere exact
+                :
+                {
+                  facingMode: "environment"
+                } // Android Chrome más flexible
+            };
+
+            html5QrCode
+              .start(backCamera?.id || {
+                  facingMode: "environment"
+                }, config,
+                async (decodedText) => {
+                    let serial = "";
+                    try {
+                      const u = new URL(decodedText, window.location.origin);
+                      serial = u.searchParams.get("serial") || "";
+                    } catch (_) {
+                      serial = decodedText;
+                    }
+
+                    serial = (serial || "").trim();
+                    if (!serial) {
+                      alert("❌ No se detectó un serial válido en el QR.");
+                      return;
+                    }
+
+                    statusDiv.style.display = "block";
+                    await html5QrCode.stop();
+                    setTimeout(() => {
+                      window.location.assign(`/prestar_UC/public/docentes/docente_equipo.php?serial=${encodeURIComponent(serial)}`);
+                    }, 200);
+                  },
+                  (errorMsg) => {
+                    if (!/NotFoundException/.test(errorMsg)) console.warn("Error escaneo:", errorMsg);
+                  }
+              )
+              .catch(err => {
+                console.warn("Error de inicio de cámara:", err);
+
+                // Fallback: intentar sin facingMode si Android falla
+                if (isAndroid) {
+                  html5QrCode.start(
+                    backCamera.id, {
+                      fps: 10,
+                      qrbox: {
+                        width: 250,
+                        height: 250
+                      },
+                      experimentalFeatures: {
+                        useBarCodeDetectorIfSupported: true
+                      }
+                    },
+                    (decodedText) => {
+                      let serial = decodedText.trim();
+                      if (!serial) {
+                        alert("❌ No se detectó un serial válido en el QR.");
+                        return;
+                      }
+                      statusDiv.style.display = "block";
+                      html5QrCode.stop();
+                      setTimeout(() => {
+                        window.location.assign(`/prestar_UC/public/docentes/docente_equipo.php?serial=${encodeURIComponent(serial)}`);
+                      }, 200);
+                    }
+                  );
+                } else {
+                  alert("⚠️ No se pudo iniciar la cámara. Revisá los permisos.");
+                }
+              });
+          })
+          .catch(err => {
+            console.error("Error al obtener cámaras:", err);
+            alert("No se pudo acceder a la cámara.");
+          });
       }
-
-      applyTheme(currentTheme);
-
-      toggleButton.addEventListener('click', () => {
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        applyTheme(newTheme);
-      });
     });
   </script>
 
 </body>
+
 </html>

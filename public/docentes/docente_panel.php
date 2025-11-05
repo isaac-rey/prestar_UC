@@ -142,21 +142,21 @@ function actualizarPrestamosActivos(prestamos){
 }
 
 function actualizarCesiones(cesiones){
-    const cont=document.getElementById('cesionesContainer');
-    if(!cont)return;
-    if(!cesiones.length){
-        cont.innerHTML=`<div class="empty-state"><div class="empty-state-icon">✅</div><p>No hay solicitudes pendientes</p></div>`;
-        return;
-    }
-    cont.innerHTML=cesiones.map(c=>`
-    <div class="cesion-item">
-        <p><strong>${c.cedente_nombre} ${c.cedente_apellido}</strong> quiere cederte:</p>
-        <p class="muted">📦 ${c.equipo_nombre} (Serial: ${c.equipo_serial})</p>
-        <div class="flex mt-1">
-            <button class="btn btn-sm" onclick="responderCesion(${c.id},'aceptar')">✅ Aceptar</button>
-            <button class="btn-secondary btn-sm" onclick="responderCesion(${c.id},'rechazar')">❌ Rechazar</button>
-        </div>
-    </div>`).join('');
+ const cont=document.getElementById('cesionesContainer');
+ if(!cont)return;
+ if(!cesiones.length){
+ cont.innerHTML=`<div class="empty-state"><div class="empty-state-icon">✅</div><p>No hay solicitudes pendientes</p></div>`;
+return;
+ }
+ cont.innerHTML=cesiones.map(c=>`
+ <div class="cesion-item">
+ <p><strong>${c.cedente_nombre} ${c.cedente_apellido}</strong> quiere cederte:</p>
+ <p class="muted">📦 ${c.equipo_tipo} ${c.equipo_marca} ${c.equipo_modelo} (Serial: ${c.equipo_serial})</p>
+ <div class="flex mt-1">
+ <button class="btn btn-sm" onclick="responderCesion(${c.id},'aceptar')">✅ Aceptar</button>
+ <button class="btn-secondary btn-sm" onclick="responderCesion(${c.id},'rechazar')">❌ Rechazar</button>
+</div>
+ </div>`).join('');
 }
 
 function responderCesion(id,accion){
