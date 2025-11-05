@@ -128,7 +128,7 @@ $e = doc();
                     statusDiv.style.display = "block";
                     await html5QrCode.stop();
                     setTimeout(() => {
-                      window.location.assign(`/prestar_UC/public/docentes/docente_equipo.php?serial=${encodeURIComponent(serial)}`);
+                      window.location.assign(`/prestar_UC/public/docentes/docente_eleccion.php?serial=${encodeURIComponent(serial)}`);
                     }, 200);
                   },
                   (errorMsg) => {
@@ -160,7 +160,7 @@ $e = doc();
                       statusDiv.style.display = "block";
                       html5QrCode.stop();
                       setTimeout(() => {
-                        window.location.assign(`/prestar_UC/public/docentes/docente_equipo.php?serial=${encodeURIComponent(serial)}`);
+                        window.location.assign(`/prestar_UC/public/docentes/docente_eleccion.php?serial=${encodeURIComponent(serial)}`);
                       }, 200);
                     }
                   );

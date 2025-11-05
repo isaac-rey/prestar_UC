@@ -131,7 +131,7 @@ $e = est();
                     statusDiv.style.display = "block";
                     await html5QrCode.stop();
                     setTimeout(() => {
-                      window.location.assign(`/prestar_UC/public/estudiantes/estudiante_equipo.php?serial=${encodeURIComponent(serial)}`);
+                      window.location.assign(`/prestar_UC/public/estudiantes/estudiante_eleccion.php?serial=${encodeURIComponent(serial)}`);
                     }, 200);
                   },
                   (errorMsg) => {
@@ -163,7 +163,7 @@ $e = est();
                       statusDiv.style.display = "block";
                       html5QrCode.stop();
                       setTimeout(() => {
-                        window.location.assign(`/prestar_UC/public/estudiantes/estudiante_equipo.php?serial=${encodeURIComponent(serial)}`);
+                        window.location.assign(`/prestar_UC/public/estudiantes/estudiante_eleccion.php?serial=${encodeURIComponent(serial)}`);
                       }, 200);
                     }
                   );

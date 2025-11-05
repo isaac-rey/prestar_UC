@@ -60,7 +60,7 @@ $historial = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         <a class="btn" href="/prestar_uc/public/estudiantes/estudiante_scan.php">📷 Escanear QR</a>
       </div>
 
-      <form class="search-form mt-2" method="get" action="/prestar_uc/public/estudiantes/estudiante_equipo.php">
+      <form class="search-form mt-2" method="get" action="/prestar_uc/public/estudiantes/estudiante_eleccion.php">
         <input class="search-input" type="text" name="serial" placeholder="Ingresar N° de serie" required>
         <button class="btn" type="submit">🔍 Buscar</button>
       </form>
